@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { BibleVersionDto, SearchFullTextResultItem, SearchScopeRange } from '@scripture-studio/shared-types';
+import { MaterialIcon } from './MaterialIcon.js';
 
 interface SearchWorkspaceProps {
   onStageResult: (item: SearchFullTextResultItem, secondaryVersionId?: string) => void;
@@ -301,16 +302,25 @@ export const SearchWorkspace: React.FC<SearchWorkspaceProps> = ({
                   border: 'none',
                   color: 'var(--text-dim)',
                   cursor: 'pointer',
-                  fontSize: '0.9rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: 0,
                 }}
                 title="Clear input"
               >
-                ✕
+                <MaterialIcon name="close" size={16} />
               </button>
             )}
           </div>
-          <button type="submit" className="btn-primary" disabled={isSearching}>
-            <span>{isSearching ? '⚡ Searching...' : '🔍 Search'}</span>
+          <button
+            type="submit"
+            className="btn-primary"
+            disabled={isSearching}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+          >
+            <MaterialIcon name={isSearching ? 'sync' : 'search'} size={17} />
+            <span>{isSearching ? 'Searching...' : 'Search'}</span>
           </button>
         </form>
 
@@ -461,7 +471,7 @@ export const SearchWorkspace: React.FC<SearchWorkspaceProps> = ({
                   e.currentTarget.style.backgroundColor = 'transparent';
                 }}
               >
-                ✕
+                <MaterialIcon name="close" size={13} />
               </span>
             </div>
           ))}
@@ -522,9 +532,12 @@ export const SearchWorkspace: React.FC<SearchWorkspaceProps> = ({
                   color: 'var(--text-dim)',
                   border: 'none',
                   cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
               >
-                ✕
+                <MaterialIcon name="close" size={15} />
               </button>
             </div>
           ) : (
@@ -664,23 +677,37 @@ export const SearchWorkspace: React.FC<SearchWorkspaceProps> = ({
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
                     <button
                       className="btn-secondary"
-                      style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }}
+                      style={{
+                        padding: '0.25rem 0.6rem',
+                        fontSize: '0.75rem',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.3rem',
+                      }}
                       onClick={(e) => {
                         e.stopPropagation();
                         onStageResult(r, secondaryVersionId || undefined);
                       }}
                     >
-                      👁 Preview
+                      <MaterialIcon name="visibility" size={14} />
+                      <span>Preview</span>
                     </button>
                     <button
                       className="btn-primary"
-                      style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }}
+                      style={{
+                        padding: '0.25rem 0.6rem',
+                        fontSize: '0.75rem',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.3rem',
+                      }}
                       onClick={(e) => {
                         e.stopPropagation();
                         onTakeLiveResult(r, secondaryVersionId || undefined);
                       }}
                     >
-                      ⚡ Take Live
+                      <MaterialIcon name="bolt" size={15} />
+                      <span>Take Live</span>
                     </button>
                   </div>
                 </div>
@@ -718,8 +745,19 @@ export const SearchWorkspace: React.FC<SearchWorkspaceProps> = ({
           </div>
         ) : !hasSearched ? (
           <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-dim)' }}>
-            <div style={{ fontSize: '1.2rem', marginBottom: '0.5rem', color: '#94A3B8' }}>
-              ⚡ Instant Scripture Auto-Search
+            <div
+              style={{
+                fontSize: '1.2rem',
+                marginBottom: '0.5rem',
+                color: '#94A3B8',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.4rem',
+              }}
+            >
+              <MaterialIcon name="bolt" size={20} color="#38BDF8" />
+              <span>Instant Scripture Auto-Search</span>
             </div>
             <div>Start typing any reference (e.g. <em>John 1:1</em>, <em>Psalm 23</em>) or keyword (<em>light</em>, <em>love</em>) above.</div>
           </div>

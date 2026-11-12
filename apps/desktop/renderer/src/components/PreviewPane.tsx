@@ -1,5 +1,6 @@
 import React from 'react';
 import { BibleVersionDto, PresentationStateDto, ThemeDto } from '@scripture-studio/shared-types';
+import { MaterialIcon } from './MaterialIcon.js';
 
 interface PreviewPaneProps {
   state: PresentationStateDto | null;
@@ -315,7 +316,8 @@ export default function PreviewPane({
               }}
               title="Swap primary and secondary translations"
             >
-              <span>⇄ Swap</span>
+              <MaterialIcon name="swap_horiz" size={16} />
+              <span>Swap</span>
             </button>
           )}
         </div>
@@ -404,7 +406,8 @@ export default function PreviewPane({
             disabled={!slide}
             title={slide ? 'Previous Verse (Arrow Left / Arrow Up / PageUp)' : 'No scripture staged'}
           >
-            <span>◀ Prev Verse (←)</span>
+            <MaterialIcon name="chevron_left" size={18} />
+            <span>Prev Verse (←)</span>
           </button>
 
           <button
@@ -424,17 +427,28 @@ export default function PreviewPane({
             disabled={!slide}
             title={slide ? 'Next Verse (Arrow Right / Arrow Down / PageDown / Space)' : 'No scripture staged'}
           >
-            <span>Next Verse (→) ▶</span>
+            <span>Next Verse (→)</span>
+            <MaterialIcon name="chevron_right" size={18} />
           </button>
         </div>
 
         <button
           className="btn-primary"
-          style={{ width: '100%', padding: '0.75rem', fontSize: '1rem', fontWeight: 800 }}
+          style={{
+            width: '100%',
+            padding: '0.75rem',
+            fontSize: '1rem',
+            fontWeight: 800,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.45rem',
+          }}
           onClick={onTakeLive}
           disabled={!slide}
         >
-          <span>⚡ TAKE LIVE (F12)</span>
+          <MaterialIcon name="bolt" size={20} />
+          <span>TAKE LIVE (F12)</span>
         </button>
       </div>
     </div>

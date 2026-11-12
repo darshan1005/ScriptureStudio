@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { BibleVersionDto, ProgramDto, ProgramItemDto } from '@scripture-studio/shared-types';
+import { MaterialIcon } from './MaterialIcon.js';
 
 interface ProgramEditorWorkspaceProps {
   onStageItem: (item: ProgramItemDto, secondaryVersionId?: string) => void;
@@ -299,7 +300,7 @@ export const ProgramEditorWorkspace: React.FC<ProgramEditorWorkspaceProps> = ({
           }}
         >
           <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#F1F5F9', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <span>📋</span>
+            <MaterialIcon name="playlist_play" size={19} />
             <span>Service Playlists</span>
           </div>
 
@@ -338,9 +339,13 @@ export const ProgramEditorWorkspace: React.FC<ProgramEditorWorkspaceProps> = ({
                   borderRadius: '4px',
                   cursor: 'pointer',
                   fontWeight: 600,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
                 }}
               >
-                ✨ Add Sample Sunday Service
+                <MaterialIcon name="auto_awesome" size={15} />
+                <span>Add Sample Sunday Service</span>
               </button>
             </div>
           ) : (
@@ -406,7 +411,7 @@ export const ProgramEditorWorkspace: React.FC<ProgramEditorWorkspaceProps> = ({
                       e.currentTarget.style.opacity = isSelected ? '0.8' : '0.4';
                     }}
                   >
-                    🗑️
+                    <MaterialIcon name="delete" size={16} />
                   </button>
                 </div>
               );
@@ -443,10 +448,17 @@ export const ProgramEditorWorkspace: React.FC<ProgramEditorWorkspaceProps> = ({
                 <button
                   className="btn-secondary"
                   onClick={handleCreateSampleService}
-                  style={{ fontSize: '0.8rem', padding: '0.35rem 0.65rem' }}
+                  style={{
+                    fontSize: '0.8rem',
+                    padding: '0.35rem 0.65rem',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                  }}
                   title="Add a sample service playlist"
                 >
-                  ✨ Template
+                  <MaterialIcon name="auto_awesome" size={15} />
+                  <span>Template</span>
                 </button>
               </div>
             </div>
@@ -498,8 +510,9 @@ export const ProgramEditorWorkspace: React.FC<ProgramEditorWorkspaceProps> = ({
               </form>
 
               {inputError && (
-                <div style={{ color: '#F87171', fontSize: '0.8rem', fontWeight: 500 }}>
-                  ⚠️ {inputError}
+                <div style={{ color: '#F87171', fontSize: '0.8rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <MaterialIcon name="warning" size={15} color="#F87171" />
+                  <span>{inputError}</span>
                 </div>
               )}
             </div>
@@ -628,10 +641,13 @@ export const ProgramEditorWorkspace: React.FC<ProgramEditorWorkspaceProps> = ({
                             border: '1px solid var(--border-color)',
                             borderRadius: '4px',
                             cursor: index === 0 ? 'not-allowed' : 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
                           }}
                           title="Move Up"
                         >
-                          ▲
+                          <MaterialIcon name="arrow_drop_up" size={16} />
                         </button>
 
                         <button
@@ -649,38 +665,56 @@ export const ProgramEditorWorkspace: React.FC<ProgramEditorWorkspaceProps> = ({
                             border: '1px solid var(--border-color)',
                             borderRadius: '4px',
                             cursor: index === activeProgram.items.length - 1 ? 'not-allowed' : 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
                           }}
                           title="Move Down"
                         >
-                          ▼
+                          <MaterialIcon name="arrow_drop_down" size={16} />
                         </button>
 
                         {/* Preview Button */}
                         <button
                           type="button"
                           className="btn-secondary"
-                          style={{ padding: '0.3rem 0.65rem', fontSize: '0.78rem' }}
+                          style={{
+                            padding: '0.3rem 0.65rem',
+                            fontSize: '0.78rem',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.3rem',
+                          }}
                           onClick={(e) => {
                             e.stopPropagation();
                             onStageItem(item, effectiveSec);
                           }}
                           title="Stage in preview monitor"
                         >
-                          👁️ Preview
+                          <MaterialIcon name="visibility" size={14} />
+                          <span>Preview</span>
                         </button>
 
                         {/* Live Button */}
                         <button
                           type="button"
                           className="btn-primary"
-                          style={{ padding: '0.3rem 0.75rem', fontSize: '0.78rem', fontWeight: 600 }}
+                          style={{
+                            padding: '0.3rem 0.75rem',
+                            fontSize: '0.78rem',
+                            fontWeight: 600,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.3rem',
+                          }}
                           onClick={(e) => {
                             e.stopPropagation();
                             onTakeLiveItem(item, effectiveSec);
                           }}
                           title="Take live immediately on audience display"
                         >
-                          ⚡ Live
+                          <MaterialIcon name="bolt" size={15} />
+                          <span>Live</span>
                         </button>
 
                         {/* Delete Item Button */}
@@ -695,13 +729,15 @@ export const ProgramEditorWorkspace: React.FC<ProgramEditorWorkspaceProps> = ({
                           border: 'none',
                           color: '#EF4444',
                           cursor: 'pointer',
-                          fontSize: '0.9rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
                           padding: '0.2rem 0.4rem',
                           marginLeft: '0.2rem',
                         }}
                         title="Remove item from playlist"
                       >
-                        ✕
+                        <MaterialIcon name="close" size={15} />
                       </button>
                     </div>
                   </div>
@@ -712,7 +748,9 @@ export const ProgramEditorWorkspace: React.FC<ProgramEditorWorkspaceProps> = ({
           </>
         ) : (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1rem', color: 'var(--text-dim)' }}>
-            <div style={{ fontSize: '3rem', opacity: 0.4 }}>📋</div>
+            <div style={{ opacity: 0.4, color: '#64748B' }}>
+              <MaterialIcon name="playlist_play" size={64} />
+            </div>
             <div style={{ fontSize: '1rem', fontWeight: 600, color: '#94A3B8' }}>
               Select or create a service playlist to begin.
             </div>
@@ -720,9 +758,16 @@ export const ProgramEditorWorkspace: React.FC<ProgramEditorWorkspaceProps> = ({
               type="button"
               className="btn-primary"
               onClick={handleCreateSampleService}
-              style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+              style={{
+                padding: '0.5rem 1rem',
+                fontSize: '0.85rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+              }}
             >
-              ✨ Create Sample Sunday Service Playlist
+              <MaterialIcon name="auto_awesome" size={16} />
+              <span>Create Sample Sunday Service Playlist</span>
             </button>
           </div>
         )}

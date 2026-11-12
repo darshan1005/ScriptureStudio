@@ -16,6 +16,7 @@ import { HistoryWorkspace } from '../components/HistoryWorkspace.js';
 import { TranslationDownloaderModal } from '../components/TranslationDownloaderModal.js';
 import PreviewPane from '../components/PreviewPane.js';
 import TransportBar from '../components/TransportBar.js';
+import { MaterialIcon } from '../components/MaterialIcon.js';
 
 type SidebarTab = 'bible' | 'search' | 'programs' | 'themes' | 'history';
 
@@ -539,15 +540,17 @@ export default function ControlStudioLayout(): React.JSX.Element {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#F1F5F9' }}>
-            📖 SCRIPTURE STUDIO
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.1rem', fontWeight: 800, color: '#F1F5F9' }}>
+            <MaterialIcon name="menu_book" size={22} color="#10B981" />
+            <span>SCRIPTURE STUDIO</span>
           </div>
           <span className="badge badge-idle" style={{ fontSize: '0.7rem' }}>
             OFFLINE READY
           </span>
           <span style={{ fontSize: '0.85rem', color: 'var(--text-dim)' }}>|</span>
-          <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-            🖥️ {projectorStatus}
+          <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+            <MaterialIcon name="desktop_windows" size={17} color="#94A3B8" />
+            <span>{projectorStatus}</span>
           </span>
         </div>
 
@@ -561,12 +564,13 @@ export default function ControlStudioLayout(): React.JSX.Element {
           >
             <span
               style={{
-                display: 'inline-block',
+                display: 'inline-flex',
+                alignItems: 'center',
                 transform: isReloading ? 'rotate(180deg)' : 'none',
                 transition: 'transform 0.4s ease',
               }}
             >
-              🔄
+              <MaterialIcon name="sync" size={17} />
             </span>
             <span>{isReloading ? 'Reloading...' : 'Reload'}</span>
           </button>
@@ -575,8 +579,10 @@ export default function ControlStudioLayout(): React.JSX.Element {
             className="btn-secondary"
             onClick={() => setIsDownloaderOpen(true)}
             title="Download new Bible translations for offline use"
+            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
           >
-            <span>⬇ Download Bibles</span>
+            <MaterialIcon name="download" size={17} />
+            <span>Download Bibles</span>
           </button>
 
           <button
@@ -588,12 +594,16 @@ export default function ControlStudioLayout(): React.JSX.Element {
                 : 'Launch Output Window (Full Screen on Projector, or Windowed Preview on Single Display)'
             }
             style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
               backgroundColor: isOutputOpen ? '#059669' : undefined,
               borderColor: isOutputOpen ? '#10B981' : undefined,
               fontWeight: 600,
             }}
           >
-            <span>{isOutputOpen ? '🟢 Output Active' : '📽️ Open Output'}</span>
+            <MaterialIcon name="cast" size={17} color={isOutputOpen ? '#FFFFFF' : 'currentColor'} />
+            <span>{isOutputOpen ? 'Output Active' : 'Open Output'}</span>
           </button>
 
           {/* Screen / Projector Target Selector */}
@@ -618,7 +628,7 @@ export default function ControlStudioLayout(): React.JSX.Element {
                 displays.map((d, idx) => (
                   <option key={d.id} value={d.id}>
                     {d.isPrimary ? 'Primary Display' : `Display ${idx + 1}`} ({d.bounds.width}x{d.bounds.height})
-                    {d.id === selectedAudienceDisplayId ? ' 📽️' : ''}
+                    {d.id === selectedAudienceDisplayId ? ' [Active]' : ''}
                   </option>
                 ))
               )}
@@ -693,7 +703,7 @@ export default function ControlStudioLayout(): React.JSX.Element {
               onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)')}
               onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
             >
-              ☰
+              <MaterialIcon name="menu" size={22} />
             </button>
           ) : (
             <div
@@ -744,18 +754,19 @@ export default function ControlStudioLayout(): React.JSX.Element {
                   e.currentTarget.style.color = 'var(--text-dim)';
                 }}
               >
-                ◀ Collapse
+                <MaterialIcon name="chevron_left" size={16} />
+                <span>Collapse</span>
               </button>
             </div>
           )}
 
           {/* Nav Items */}
           {[
-            { id: 'bible', label: 'Bible Reader', icon: '📖', hotkey: 'F5' },
-            { id: 'search', label: 'Search Bible', icon: '🔍', hotkey: 'F6' },
-            { id: 'programs', label: 'Programs', icon: '📋' },
-            { id: 'themes', label: 'Theme Styler', icon: '🎨' },
-            { id: 'history', label: 'History Log', icon: '🕒' },
+            { id: 'bible', label: 'Bible Reader', icon: 'menu_book', hotkey: 'F5' },
+            { id: 'search', label: 'Search Bible', icon: 'search', hotkey: 'F6' },
+            { id: 'programs', label: 'Programs', icon: 'playlist_play' },
+            { id: 'themes', label: 'Theme Styler', icon: 'palette' },
+            { id: 'history', label: 'History Log', icon: 'history' },
           ].map((item) => {
             const isActive = activeTab === item.id;
             return (
@@ -792,7 +803,11 @@ export default function ControlStudioLayout(): React.JSX.Element {
                   if (!isActive) e.currentTarget.style.backgroundColor = 'transparent';
                 }}
               >
-                <span style={{ fontSize: '1.25rem', flexShrink: 0 }}>{item.icon}</span>
+                <MaterialIcon
+                  name={item.icon}
+                  size={22}
+                  color={isActive ? '#10B981' : 'var(--text-muted)'}
+                />
                 {!isNavCollapsed && (
                   <div
                     style={{

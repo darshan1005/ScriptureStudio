@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Modal } from '@scripture-studio/ui-library';
 import { BibleVersionDto, DownloadBibleProgressEvent } from '@scripture-studio/shared-types';
+import { MaterialIcon } from './MaterialIcon.js';
 
 interface TranslationDownloaderModalProps {
   isOpen: boolean;
@@ -169,15 +170,15 @@ export const TranslationDownloaderModal: React.FC<TranslationDownloaderModalProp
         if (res.success) {
           setProgress(100);
           setProgressStage('Download and indexing complete!');
-          setStatusMessage(`✓ Successfully installed ${module.name} (${res.verseCount?.toLocaleString() || 31102} verses)!`);
+          setStatusMessage(`Successfully installed ${module.name} (${res.verseCount?.toLocaleString() || 31102} verses)!`);
           await fetchInstalledVersions();
           onDownloaded();
         } else {
-          setStatusMessage(`❌ Error: ${res.error || 'Failed to download translation.'}`);
+          setStatusMessage(`Error: ${res.error || 'Failed to download translation.'}`);
         }
       }
     } catch (err) {
-      setStatusMessage(`❌ Error: ${String(err)}`);
+      setStatusMessage(`Error: ${String(err)}`);
     } finally {
       setTimeout(() => {
         setDownloadingCode(null);
@@ -196,12 +197,12 @@ export const TranslationDownloaderModal: React.FC<TranslationDownloaderModalProp
     try {
       if (window.scriptureStudioApi) {
         await window.scriptureStudioApi.bible.deleteVersion(versionId);
-        setStatusMessage(`✓ Removed ${module.name} successfully.`);
+        setStatusMessage(`Removed ${module.name} successfully.`);
         await fetchInstalledVersions();
         onDownloaded();
       }
     } catch (err) {
-      setStatusMessage(`❌ Error removing version: ${String(err)}`);
+      setStatusMessage(`Error removing version: ${String(err)}`);
     } finally {
       setDeletingCode(null);
     }
@@ -270,7 +271,9 @@ export const TranslationDownloaderModal: React.FC<TranslationDownloaderModalProp
 
         {/* Search Input Bar */}
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-          <span style={{ position: 'absolute', left: '12px', color: '#64748B', fontSize: '0.9rem' }}>🔍</span>
+          <span style={{ position: 'absolute', left: '12px', color: '#64748B', display: 'flex', alignItems: 'center' }}>
+            <MaterialIcon name="search" size={18} color="#64748B" />
+          </span>
           <input
             type="text"
             placeholder="Search translation by name, code (e.g. ESV, TEL, RVR), or language..."
@@ -298,11 +301,14 @@ export const TranslationDownloaderModal: React.FC<TranslationDownloaderModalProp
                 border: 'none',
                 color: '#94A3B8',
                 cursor: 'pointer',
-                fontSize: '0.9rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 0,
               }}
               title="Clear search"
             >
-              ✕
+              <MaterialIcon name="close" size={16} />
             </button>
           )}
         </div>
@@ -415,14 +421,22 @@ export const TranslationDownloaderModal: React.FC<TranslationDownloaderModalProp
             style={{
               padding: '0.65rem 0.9rem',
               borderRadius: '6px',
-              backgroundColor: statusMessage.startsWith('❌') ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)',
-              border: statusMessage.startsWith('❌') ? '1px solid #EF4444' : '1px solid #10B981',
-              color: statusMessage.startsWith('❌') ? '#FCA5A5' : '#6EE7B7',
+              backgroundColor: statusMessage.toLowerCase().includes('error') ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+              border: statusMessage.toLowerCase().includes('error') ? '1px solid #EF4444' : '1px solid #10B981',
+              color: statusMessage.toLowerCase().includes('error') ? '#FCA5A5' : '#6EE7B7',
               fontSize: '0.82rem',
               fontWeight: 500,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
             }}
           >
-            {statusMessage}
+            <MaterialIcon
+              name={statusMessage.toLowerCase().includes('error') ? 'error' : 'check_circle'}
+              size={17}
+              color={statusMessage.toLowerCase().includes('error') ? '#EF4444' : '#10B981'}
+            />
+            <span>{statusMessage}</span>
           </div>
         )}
 
@@ -503,9 +517,13 @@ export const TranslationDownloaderModal: React.FC<TranslationDownloaderModalProp
                             color: '#34D399',
                             fontWeight: 600,
                             border: '1px solid rgba(16, 185, 129, 0.4)',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.25rem',
                           }}
                         >
-                          ✓ Offline Ready
+                          <MaterialIcon name="check" size={13} color="#34D399" />
+                          <span>Offline Ready</span>
                         </span>
                       )}
                     </div>
@@ -539,7 +557,8 @@ export const TranslationDownloaderModal: React.FC<TranslationDownloaderModalProp
                           gap: '0.3rem',
                         }}
                       >
-                        {isDeleting ? 'Removing...' : '🗑️ Remove'}
+                        <MaterialIcon name="delete" size={15} color="#EF4444" />
+                        <span>{isDeleting ? 'Removing...' : 'Remove'}</span>
                       </button>
                     ) : (
                       <button
@@ -555,7 +574,8 @@ export const TranslationDownloaderModal: React.FC<TranslationDownloaderModalProp
                         onClick={() => handleDownload(item)}
                         disabled={anyBusy}
                       >
-                        {isDownloading ? 'Installing...' : '⬇ Install Offline'}
+                        <MaterialIcon name="download" size={16} />
+                        <span>{isDownloading ? 'Installing...' : 'Install Offline'}</span>
                       </button>
                     )}
                   </div>

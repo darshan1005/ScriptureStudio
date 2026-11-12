@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { PresentationStateDto, ThemeDto } from '@scripture-studio/shared-types';
+import { MaterialIcon } from '../components/MaterialIcon.js';
 
 export default function AudienceDisplayLayout(): React.JSX.Element {
   const [state, setState] = useState<PresentationStateDto | null>(null);
@@ -85,7 +86,9 @@ export default function AudienceDisplayLayout(): React.JSX.Element {
           userSelect: 'none',
         }}
       >
-        <div style={{ fontSize: '3rem', opacity: 0.18 }}>📖</div>
+        <div style={{ opacity: 0.18, color: '#FFFFFF' }}>
+          <MaterialIcon name="menu_book" size={64} />
+        </div>
         <div
           style={{
             color: '#1E293B',

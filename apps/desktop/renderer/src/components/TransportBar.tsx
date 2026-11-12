@@ -1,5 +1,6 @@
 import React from 'react';
 import { PresentationStateDto } from '@scripture-studio/shared-types';
+import { MaterialIcon } from './MaterialIcon.js';
 
 interface TransportBarProps {
   state: PresentationStateDto | null;
@@ -47,10 +48,18 @@ export default function TransportBar({
         <button
           className={`btn-freeze ${isFrozen ? 'active' : ''}`}
           onClick={onFreezeToggle}
-          style={{ minWidth: '135px', fontWeight: 600 }}
+          style={{
+            minWidth: '135px',
+            fontWeight: 600,
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.4rem',
+          }}
           title="Freeze display on current frame (F9)"
         >
-          <span>{isFrozen ? '❄ UNFREEZE (F9)' : '❄ FREEZE (F9)'}</span>
+          <MaterialIcon name="ac_unit" size={17} />
+          <span>{isFrozen ? 'UNFREEZE (F9)' : 'FREEZE (F9)'}</span>
         </button>
 
         <button
@@ -63,10 +72,15 @@ export default function TransportBar({
             color: !isVisible ? '#FFFFFF' : undefined,
             fontWeight: 600,
             boxShadow: !isVisible ? '0 0 10px rgba(245, 158, 11, 0.4)' : undefined,
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.4rem',
           }}
           title={isVisible ? 'Hide output screen to black (F10)' : 'Unhide output screen back to live (F10)'}
         >
-          <span>{isVisible ? '○ HIDE (F10)' : '● UNHIDE (F10)'}</span>
+          <MaterialIcon name={isVisible ? 'visibility_off' : 'visibility'} size={17} />
+          <span>{isVisible ? 'HIDE (F10)' : 'UNHIDE (F10)'}</span>
         </button>
       </div>
 

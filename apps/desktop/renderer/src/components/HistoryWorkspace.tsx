@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { BibleVersionDto, PresentationHistoryEntryDto } from '@scripture-studio/shared-types';
+import { MaterialIcon } from './MaterialIcon.js';
 
 interface HistoryWorkspaceProps {
   onRecallLive: (entry: PresentationHistoryEntryDto, secondaryVersionId?: string) => void;
@@ -108,9 +109,10 @@ export const HistoryWorkspace: React.FC<HistoryWorkspaceProps> = ({
             className="btn-secondary"
             onClick={loadHistory}
             disabled={isLoading}
-            style={{ fontSize: '0.85rem' }}
+            style={{ fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
           >
-            {isLoading ? '⏳ Refreshing...' : '🔄 Refresh'}
+            <MaterialIcon name="sync" size={16} />
+            <span>{isLoading ? 'Refreshing...' : 'Refresh'}</span>
           </button>
           <button
             className="btn-secondary"
@@ -127,7 +129,9 @@ export const HistoryWorkspace: React.FC<HistoryWorkspaceProps> = ({
       <div style={{ flex: 1, overflowY: 'auto', padding: '1rem' }}>
         {history.length === 0 ? (
           <div style={{ padding: '3.5rem 1rem', textAlign: 'center', color: 'var(--text-dim)' }}>
-            <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🕒</div>
+            <div style={{ marginBottom: '0.75rem', color: '#64748B' }}>
+              <MaterialIcon name="history" size={48} />
+            </div>
             <div style={{ fontSize: '1rem', fontWeight: 600, color: '#94A3B8' }}>
               No presentation history in the last 24 hours
             </div>
@@ -213,7 +217,7 @@ export const HistoryWorkspace: React.FC<HistoryWorkspaceProps> = ({
                       gap: '4px',
                     }}
                   >
-                    <span>🕒</span>
+                    <MaterialIcon name="schedule" size={15} color="#94A3B8" />
                     <span>Projected {displayTimestamp}</span>
                   </div>
                 </div>
@@ -221,19 +225,33 @@ export const HistoryWorkspace: React.FC<HistoryWorkspaceProps> = ({
                 <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
                   <button
                     className="btn-secondary"
-                    style={{ padding: '0.4rem 0.85rem', fontSize: '0.82rem' }}
+                    style={{
+                      padding: '0.4rem 0.85rem',
+                      fontSize: '0.82rem',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                    }}
                     onClick={() => onRecallPreview(entry, effectiveSec)}
                     title="Load into Preview stage"
                   >
-                    👁️ Preview
+                    <MaterialIcon name="visibility" size={15} />
+                    <span>Preview</span>
                   </button>
                   <button
                     className="btn-primary"
-                    style={{ padding: '0.4rem 0.85rem', fontSize: '0.82rem' }}
+                    style={{
+                      padding: '0.4rem 0.85rem',
+                      fontSize: '0.82rem',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                    }}
                     onClick={() => onRecallLive(entry, effectiveSec)}
                     title="Send live to audience display"
                   >
-                    ⚡ Recall Live
+                    <MaterialIcon name="bolt" size={16} />
+                    <span>Recall Live</span>
                   </button>
                 </div>
               </div>

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ThemeDto } from '@scripture-studio/shared-types';
+import { MaterialIcon } from './MaterialIcon.js';
 
 interface ThemeEditorWorkspaceProps {
   onThemeUpdated: (theme: ThemeDto) => void;
@@ -283,17 +284,23 @@ export const ThemeEditorWorkspace: React.FC<ThemeEditorWorkspaceProps> = ({ onTh
                 ) : (
                   <button
                     className="btn-secondary"
-                    style={{ fontSize: '0.75rem', padding: '0.3rem 0.6rem' }}
+                    style={{ fontSize: '0.75rem', padding: '0.3rem 0.6rem', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
                     onClick={handleSetDefault}
                   >
-                    ⭐ Set as Default
+                    <MaterialIcon name="star" size={15} color="#F59E0B" />
+                    <span>Set as Default</span>
                   </button>
                 )}
               </div>
 
               <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button className="btn-primary" onClick={handleSaveTheme}>
-                  💾 Save Theme
+                <button
+                  className="btn-primary"
+                  onClick={handleSaveTheme}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+                >
+                  <MaterialIcon name="save" size={16} />
+                  <span>Save Theme</span>
                 </button>
               </div>
             </div>
@@ -320,10 +327,14 @@ export const ThemeEditorWorkspace: React.FC<ThemeEditorWorkspaceProps> = ({ onTh
                       color: 'var(--text-dim)',
                       marginBottom: '0.5rem',
                       display: 'flex',
+                      alignItems: 'center',
                       justifyContent: 'space-between',
                     }}
                   >
-                    <span>📺 Live Theme Screen Preview</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <MaterialIcon name="live_tv" size={16} />
+                      <span>Live Theme Screen Preview</span>
+                    </span>
                     <span>16:9 High-Definition</span>
                   </div>
 
@@ -588,9 +599,9 @@ export const ThemeEditorWorkspace: React.FC<ThemeEditorWorkspaceProps> = ({ onTh
                         }}
                       >
                         {[
-                          { id: 'verse', label: '📖 Verse Text' },
-                          { id: 'reference', label: '🏷️ Reference Title' },
-                          { id: 'version', label: '🌐 Version Tag' },
+                          { id: 'verse', label: 'Verse Text', icon: 'menu_book' },
+                          { id: 'reference', label: 'Reference Title', icon: 'bookmark' },
+                          { id: 'version', label: 'Version Tag', icon: 'translate' },
                         ].map((st) => {
                           const isSubActive = typoSubTab === st.id;
                           return (
@@ -608,9 +619,14 @@ export const ThemeEditorWorkspace: React.FC<ThemeEditorWorkspaceProps> = ({ onTh
                                 borderRadius: '4px',
                                 cursor: 'pointer',
                                 transition: 'all 0.15s ease',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '0.35rem',
                               }}
                             >
-                              {st.label}
+                              <MaterialIcon name={st.icon} size={15} />
+                              <span>{st.label}</span>
                             </button>
                           );
                         })}
@@ -836,10 +852,10 @@ export const ThemeEditorWorkspace: React.FC<ThemeEditorWorkspaceProps> = ({ onTh
                               </label>
                               <div style={{ display: 'flex', gap: '0.2rem' }}>
                                 {[
-                                  { id: 'left', label: '⇤' },
-                                  { id: 'center', label: '≡' },
-                                  { id: 'right', label: '⇥' },
-                                  { id: 'justify', label: '☱' },
+                                  { id: 'left', icon: 'format_align_left' },
+                                  { id: 'center', icon: 'format_align_center' },
+                                  { id: 'right', icon: 'format_align_right' },
+                                  { id: 'justify', icon: 'format_align_justify' },
                                 ].map((al) => {
                                   const isActive = selectedTheme.config.typography.alignment === al.id;
                                   return (
@@ -866,9 +882,12 @@ export const ThemeEditorWorkspace: React.FC<ThemeEditorWorkspaceProps> = ({ onTh
                                         border: isActive ? '1px solid #3B82F6' : '1px solid var(--border-color)',
                                         borderRadius: '4px',
                                         cursor: 'pointer',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
                                       }}
                                     >
-                                      {al.label}
+                                      <MaterialIcon name={al.icon} size={16} />
                                     </button>
                                   );
                                 })}
@@ -1008,9 +1027,9 @@ export const ThemeEditorWorkspace: React.FC<ThemeEditorWorkspaceProps> = ({ onTh
                             </label>
                             <div style={{ display: 'flex', gap: '0.3rem' }}>
                               {[
-                                { id: 'above', label: '⬆ Above Verse' },
-                                { id: 'below', label: '⬇ Below Verse' },
-                                { id: 'hidden', label: '🚫 Hidden' },
+                                { id: 'above', label: 'Above Verse', icon: 'arrow_upward' },
+                                { id: 'below', label: 'Below Verse', icon: 'arrow_downward' },
+                                { id: 'hidden', label: 'Hidden', icon: 'visibility_off' },
                               ].map((pos) => {
                                 const isActive = (selectedTheme.config.typography.referencePosition || 'above') === pos.id;
                                 return (
@@ -1036,9 +1055,14 @@ export const ThemeEditorWorkspace: React.FC<ThemeEditorWorkspaceProps> = ({ onTh
                                       border: isActive ? '1px solid #3B82F6' : '1px solid var(--border-color)',
                                       borderRadius: '4px',
                                       cursor: 'pointer',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      gap: '0.3rem',
                                     }}
                                   >
-                                    {pos.label}
+                                    <MaterialIcon name={pos.icon} size={15} />
+                                    <span>{pos.label}</span>
                                   </button>
                                 );
                               })}
@@ -1288,9 +1312,14 @@ export const ThemeEditorWorkspace: React.FC<ThemeEditorWorkspaceProps> = ({ onTh
                                   border: selectedTheme.config.typography.showVersion !== false ? '1px solid #10B981' : '1px solid var(--border-color)',
                                   borderRadius: '4px',
                                   cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: '0.35rem',
                                 }}
                               >
-                                👁️ Show Version
+                                <MaterialIcon name="visibility" size={15} />
+                                <span>Show Version</span>
                               </button>
                               <button
                                 type="button"
@@ -1312,9 +1341,14 @@ export const ThemeEditorWorkspace: React.FC<ThemeEditorWorkspaceProps> = ({ onTh
                                   border: selectedTheme.config.typography.showVersion === false ? '1px solid #EF4444' : '1px solid var(--border-color)',
                                   borderRadius: '4px',
                                   cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: '0.35rem',
                                 }}
                               >
-                                🚫 Hide Version
+                                <MaterialIcon name="visibility_off" size={15} />
+                                <span>Hide Version</span>
                               </button>
                             </div>
                           </div>
@@ -1328,7 +1362,7 @@ export const ThemeEditorWorkspace: React.FC<ThemeEditorWorkspaceProps> = ({ onTh
                               {[
                                 { id: 'parentheses', label: '(KJV)', desc: 'Parentheses' },
                                 { id: 'brackets', label: '[KJV]', desc: 'Brackets' },
-                                { id: 'pill', label: '🏷️ Pill', desc: 'Badge Pill' },
+                                { id: 'pill', label: 'Pill', desc: 'Badge Pill' },
                                 { id: 'plain', label: 'Plain', desc: 'No Enclosure' },
                               ].map((fmt) => {
                                 const isActive = (selectedTheme.config.typography.versionBadgeFormat || 'parentheses') === fmt.id;
@@ -1585,10 +1619,10 @@ export const ThemeEditorWorkspace: React.FC<ThemeEditorWorkspaceProps> = ({ onTh
                         </label>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.4rem', marginBottom: '1rem' }}>
                           {[
-                            { id: 'gradient', label: '🎨 Color Gradient' },
-                            { id: 'image', label: '🖼️ Custom Image' },
-                            { id: 'solid', label: '⬛ Solid Color' },
-                            { id: 'transparent', label: '🪟 Transparent (OBS)' },
+                            { id: 'gradient', label: 'Color Gradient', icon: 'palette' },
+                            { id: 'image', label: 'Custom Image', icon: 'image' },
+                            { id: 'solid', label: 'Solid Color', icon: 'square' },
+                            { id: 'transparent', label: 'Transparent (OBS)', icon: 'layers' },
                           ].map((m) => {
                             const isActive = selectedTheme.config.background.type === m.id;
                             return (
@@ -1620,10 +1654,12 @@ export const ThemeEditorWorkspace: React.FC<ThemeEditorWorkspaceProps> = ({ onTh
                                   display: 'flex',
                                   alignItems: 'center',
                                   justifyContent: 'center',
+                                  gap: '0.4rem',
                                   boxShadow: isActive ? '0 0 10px rgba(59, 130, 246, 0.35)' : 'none',
                                 }}
                               >
-                                {m.label}
+                                <MaterialIcon name={m.icon} size={17} />
+                                <span>{m.label}</span>
                               </button>
                             );
                           })}
@@ -1654,7 +1690,9 @@ export const ThemeEditorWorkspace: React.FC<ThemeEditorWorkspaceProps> = ({ onTh
                                 transition: 'background 0.15s ease',
                               }}
                             >
-                              <span style={{ fontSize: '2rem', marginBottom: '0.25rem' }}>📂</span>
+                              <div style={{ marginBottom: '0.25rem', color: '#60A5FA' }}>
+                                <MaterialIcon name="folder_open" size={32} />
+                              </div>
                               <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#60A5FA' }}>
                                 Click to Browse Image File
                               </span>
@@ -1716,8 +1754,9 @@ export const ThemeEditorWorkspace: React.FC<ThemeEditorWorkspaceProps> = ({ onTh
                                       border: '1px solid #10B981',
                                     }}
                                   />
-                                  <span style={{ fontSize: '0.78rem', color: '#10B981', fontWeight: 600 }}>
-                                    ✓ Image Applied
+                                  <span style={{ fontSize: '0.78rem', color: '#10B981', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                                    <MaterialIcon name="check_circle" size={15} color="#10B981" />
+                                    <span>Image Applied</span>
                                   </span>
                                 </div>
                                 <button
@@ -1742,9 +1781,13 @@ export const ThemeEditorWorkspace: React.FC<ThemeEditorWorkspaceProps> = ({ onTh
                                     border: '1px solid rgba(239, 68, 68, 0.3)',
                                     borderRadius: '4px',
                                     cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.25rem',
                                   }}
                                 >
-                                  🗑️ Remove
+                                  <MaterialIcon name="delete" size={14} />
+                                  <span>Remove</span>
                                 </button>
                               </div>
                             )}
@@ -2042,9 +2085,16 @@ export const ThemeEditorWorkspace: React.FC<ThemeEditorWorkspaceProps> = ({ onTh
                                   },
                                 });
                               }}
-                              style={{ fontSize: '0.8rem', padding: '0.35rem 0.85rem' }}
+                              style={{
+                                fontSize: '0.8rem',
+                                padding: '0.35rem 0.85rem',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.35rem',
+                              }}
                             >
-                              🖼️ Switch to Custom Image Mode
+                              <MaterialIcon name="image" size={16} />
+                              <span>Switch to Custom Image Mode</span>
                             </button>
                           </div>
                         </>
@@ -2121,9 +2171,16 @@ export const ThemeEditorWorkspace: React.FC<ThemeEditorWorkspaceProps> = ({ onTh
                                   },
                                 });
                               }}
-                              style={{ fontSize: '0.8rem', padding: '0.35rem 0.85rem' }}
+                              style={{
+                                fontSize: '0.8rem',
+                                padding: '0.35rem 0.85rem',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.35rem',
+                              }}
                             >
-                              🖼️ Switch to Custom Image Mode
+                              <MaterialIcon name="image" size={16} />
+                              <span>Switch to Custom Image Mode</span>
                             </button>
                           </div>
                         </div>
