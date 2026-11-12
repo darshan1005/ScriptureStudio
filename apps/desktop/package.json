@@ -1,0 +1,44 @@
+{
+  "name": "@scripture-studio/desktop",
+  "version": "1.0.0",
+  "description": "Scripture Studio — Electron Windows Desktop Presentation Host",
+  "author": "Scripture Studio Team",
+  "private": true,
+  "main": "./dist-electron/main/index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -p tsconfig.node.json && vite build",
+    "package": "electron-builder --config electron-builder.json",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@scripture-studio/shared-types": "*",
+    "@scripture-studio/logger": "*",
+    "@scripture-studio/configuration": "*",
+    "@scripture-studio/database": "*",
+    "@scripture-studio/ui-library": "*",
+    "@scripture-studio/bible-engine": "*",
+    "@scripture-studio/bible-importer": "*",
+    "@scripture-studio/scripture-search": "*",
+    "@scripture-studio/presentation-engine": "*",
+    "@scripture-studio/theme-engine": "*",
+    "@scripture-studio/media-engine": "*",
+    "@scripture-studio/display-manager": "*",
+    "@scripture-studio/keyboard-shortcuts": "*",
+    "@scripture-studio/streaming-engine": "*",
+    "lucide-react": "^1.16.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "zustand": "^5.0.3"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.8",
+    "@types/react-dom": "^19.0.3",
+    "@vitejs/plugin-react": "^4.3.4",
+    "electron": "34.5.8",
+    "typescript": "^5.7.2",
+    "vite": "^6.1.0",
+    "vite-plugin-electron": "^0.29.0",
+    "vite-plugin-electron-renderer": "^0.14.6"
+  }
+}

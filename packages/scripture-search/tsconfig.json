@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src"
+  },
+  "references": [
+    { "path": "../shared-types" },
+    { "path": "../database" },
+    { "path": "../bible-engine" },
+    { "path": "../logger" }
+  ],
+  "include": ["src/**/*"]
+}
+

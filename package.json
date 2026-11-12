@@ -1,0 +1,27 @@
+{
+  "name": "scripture-studio-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Scripture Studio — Independent BibleShow replacement for Windows",
+  "author": "Scripture Studio Team",
+  "license": "MIT",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm --workspace=apps/desktop run dev",
+    "build": "npm --workspace=apps/desktop run build",
+    "package": "npm --workspace=apps/desktop run package",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint . --ext .ts,.tsx",
+    "typecheck": "tsc --noEmit -p tsconfig.base.json"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "electron-builder": "^26.18.0",
+    "typescript": "^5.7.2",
+    "vitest": "^3.0.0"
+  }
+}

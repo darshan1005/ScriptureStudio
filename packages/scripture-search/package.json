@@ -1,0 +1,19 @@
+{
+  "name": "@scripture-studio/scripture-search",
+  "version": "1.0.0",
+  "description": "Full-text scripture search engine using SQLite FTS5 and reference parser",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "@scripture-studio/shared-types": "*",
+    "@scripture-studio/database": "*",
+    "@scripture-studio/bible-engine": "*",
+    "@scripture-studio/logger": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}

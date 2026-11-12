@@ -1,0 +1,16 @@
+{
+  "name": "@scripture-studio/theme-engine",
+  "version": "1.0.0",
+  "description": "Theme compiler, dynamic font-fitting algorithm, and safe-margin calculator",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "@scripture-studio/shared-types": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}

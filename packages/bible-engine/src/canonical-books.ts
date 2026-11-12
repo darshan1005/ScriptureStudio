@@ -1,0 +1,81 @@
+export interface CanonicalBookDefinition {
+  order: number;
+  testament: 'OT' | 'NT';
+  name: string;
+  abbreviation: string;
+  aliases: string[];
+  chapterCount: number;
+}
+
+export const CANONICAL_BOOKS: CanonicalBookDefinition[] = [
+  // Old Testament (39 books)
+  { order: 1, testament: 'OT', name: 'Genesis', abbreviation: 'Gen', aliases: ['ge', 'gn'], chapterCount: 50 },
+  { order: 2, testament: 'OT', name: 'Exodus', abbreviation: 'Exod', aliases: ['ex', 'exo'], chapterCount: 40 },
+  { order: 3, testament: 'OT', name: 'Leviticus', abbreviation: 'Lev', aliases: ['le', 'lv'], chapterCount: 27 },
+  { order: 4, testament: 'OT', name: 'Numbers', abbreviation: 'Num', aliases: ['nu', 'nm', 'nb'], chapterCount: 36 },
+  { order: 5, testament: 'OT', name: 'Deuteronomy', abbreviation: 'Deut', aliases: ['dt', 'de'], chapterCount: 34 },
+  { order: 6, testament: 'OT', name: 'Joshua', abbreviation: 'Josh', aliases: ['jos', 'jsh'], chapterCount: 24 },
+  { order: 7, testament: 'OT', name: 'Judges', abbreviation: 'Judg', aliases: ['jdg', 'jg', 'jdgs'], chapterCount: 21 },
+  { order: 8, testament: 'OT', name: 'Ruth', abbreviation: 'Ruth', aliases: ['rth', 'ru'], chapterCount: 4 },
+  { order: 9, testament: 'OT', name: '1 Samuel', abbreviation: '1Sam', aliases: ['1 sa', '1samuel', 'i samuel', '1s'], chapterCount: 31 },
+  { order: 10, testament: 'OT', name: '2 Samuel', abbreviation: '2Sam', aliases: ['2 sa', '2samuel', 'ii samuel', '2s'], chapterCount: 24 },
+  { order: 11, testament: 'OT', name: '1 Kings', abbreviation: '1Kgs', aliases: ['1 ki', '1kings', 'i kings', '1k'], chapterCount: 22 },
+  { order: 12, testament: 'OT', name: '2 Kings', abbreviation: '2Kgs', aliases: ['2 ki', '2kings', 'ii kings', '2k'], chapterCount: 25 },
+  { order: 13, testament: 'OT', name: '1 Chronicles', abbreviation: '1Chr', aliases: ['1 ch', '1chron', 'i chron'], chapterCount: 29 },
+  { order: 14, testament: 'OT', name: '2 Chronicles', abbreviation: '2Chr', aliases: ['2 ch', '2chron', 'ii chron'], chapterCount: 36 },
+  { order: 15, testament: 'OT', name: 'Ezra', abbreviation: 'Ezra', aliases: ['ezr'], chapterCount: 10 },
+  { order: 16, testament: 'OT', name: 'Nehemiah', abbreviation: 'Neh', aliases: ['ne'], chapterCount: 13 },
+  { order: 17, testament: 'OT', name: 'Esther', abbreviation: 'Esth', aliases: ['es'], chapterCount: 10 },
+  { order: 18, testament: 'OT', name: 'Job', abbreviation: 'Job', aliases: ['jb'], chapterCount: 42 },
+  { order: 19, testament: 'OT', name: 'Psalms', abbreviation: 'Ps', aliases: ['psalm', 'psa', 'pss'], chapterCount: 150 },
+  { order: 20, testament: 'OT', name: 'Proverbs', abbreviation: 'Prov', aliases: ['pr', 'prv'], chapterCount: 31 },
+  { order: 21, testament: 'OT', name: 'Ecclesiastes', abbreviation: 'Eccl', aliases: ['ecc', 'ec'], chapterCount: 12 },
+  { order: 22, testament: 'OT', name: 'Song of Solomon', abbreviation: 'Song', aliases: ['song of songs', 'sos', 'canticles'], chapterCount: 8 },
+  { order: 23, testament: 'OT', name: 'Isaiah', abbreviation: 'Isa', aliases: ['is'], chapterCount: 66 },
+  { order: 24, testament: 'OT', name: 'Jeremiah', abbreviation: 'Jer', aliases: ['je', 'jr'], chapterCount: 52 },
+  { order: 25, testament: 'OT', name: 'Lamentations', abbreviation: 'Lam', aliases: ['la'], chapterCount: 5 },
+  { order: 26, testament: 'OT', name: 'Ezekiel', abbreviation: 'Ezek', aliases: ['eze', 'ezk'], chapterCount: 48 },
+  { order: 27, testament: 'OT', name: 'Daniel', abbreviation: 'Dan', aliases: ['da', 'dn'], chapterCount: 12 },
+  { order: 28, testament: 'OT', name: 'Hosea', abbreviation: 'Hos', aliases: ['ho'], chapterCount: 14 },
+  { order: 29, testament: 'OT', name: 'Joel', abbreviation: 'Joel', aliases: ['jl'], chapterCount: 3 },
+  { order: 30, testament: 'OT', name: 'Amos', abbreviation: 'Amos', aliases: ['am'], chapterCount: 9 },
+  { order: 31, testament: 'OT', name: 'Obadiah', abbreviation: 'Obad', aliases: ['ob'], chapterCount: 1 },
+  { order: 32, testament: 'OT', name: 'Jonah', abbreviation: 'Jonah', aliases: ['jnh', 'jon'], chapterCount: 4 },
+  { order: 33, testament: 'OT', name: 'Micah', abbreviation: 'Mic', aliases: ['mc'], chapterCount: 7 },
+  { order: 34, testament: 'OT', name: 'Nahum', abbreviation: 'Nah', aliases: ['na'], chapterCount: 3 },
+  { order: 35, testament: 'OT', name: 'Habakkuk', abbreviation: 'Hab', aliases: ['hb'], chapterCount: 3 },
+  { order: 36, testament: 'OT', name: 'Zephaniah', abbreviation: 'Zeph', aliases: ['zep', 'zp'], chapterCount: 3 },
+  { order: 37, testament: 'OT', name: 'Haggai', abbreviation: 'Hag', aliases: ['hg'], chapterCount: 2 },
+  { order: 38, testament: 'OT', name: 'Zechariah', abbreviation: 'Zech', aliases: ['zec', 'zc'], chapterCount: 14 },
+  { order: 39, testament: 'OT', name: 'Malachi', abbreviation: 'Mal', aliases: ['ml'], chapterCount: 4 },
+
+  // New Testament (27 books)
+  { order: 40, testament: 'NT', name: 'Matthew', abbreviation: 'Matt', aliases: ['mt', 'mat'], chapterCount: 28 },
+  { order: 41, testament: 'NT', name: 'Mark', abbreviation: 'Mark', aliases: ['mk', 'mrk'], chapterCount: 16 },
+  { order: 42, testament: 'NT', name: 'Luke', abbreviation: 'Luke', aliases: ['lk', 'luk'], chapterCount: 24 },
+  { order: 43, testament: 'NT', name: 'John', abbreviation: 'John', aliases: ['jn', 'jhn'], chapterCount: 21 },
+  { order: 44, testament: 'NT', name: 'Acts', abbreviation: 'Acts', aliases: ['ac', 'act'], chapterCount: 28 },
+  { order: 45, testament: 'NT', name: 'Romans', abbreviation: 'Rom', aliases: ['ro', 'rm'], chapterCount: 16 },
+  { order: 46, testament: 'NT', name: '1 Corinthians', abbreviation: '1Cor', aliases: ['1 co', '1corinthians', 'i cor'], chapterCount: 16 },
+  { order: 47, testament: 'NT', name: '2 Corinthians', abbreviation: '2Cor', aliases: ['2 co', '2corinthians', 'ii cor'], chapterCount: 13 },
+  { order: 48, testament: 'NT', name: 'Galatians', abbreviation: 'Gal', aliases: ['ga'], chapterCount: 6 },
+  { order: 49, testament: 'NT', name: 'Ephesians', abbreviation: 'Eph', aliases: ['ep'], chapterCount: 6 },
+  { order: 50, testament: 'NT', name: 'Philippians', abbreviation: 'Phil', aliases: ['php', 'philip'], chapterCount: 4 },
+  { order: 51, testament: 'NT', name: 'Colossians', abbreviation: 'Col', aliases: ['coloss'], chapterCount: 4 },
+  { order: 52, testament: 'NT', name: '1 Thessalonians', abbreviation: '1Thess', aliases: ['1 th', '1thes', 'i thes'], chapterCount: 5 },
+  { order: 53, testament: 'NT', name: '2 Thessalonians', abbreviation: '2Thess', aliases: ['2 th', '2thes', 'ii thes'], chapterCount: 3 },
+  { order: 54, testament: 'NT', name: '1 Timothy', abbreviation: '1Tim', aliases: ['1 ti', '1timothy', 'i tim'], chapterCount: 6 },
+  { order: 55, testament: 'NT', name: '2 Timothy', abbreviation: '2Tim', aliases: ['2 ti', '2timothy', 'ii tim'], chapterCount: 4 },
+  { order: 56, testament: 'NT', name: 'Titus', abbreviation: 'Titus', aliases: ['tit', 'ti'], chapterCount: 3 },
+  { order: 57, testament: 'NT', name: 'Philemon', abbreviation: 'Phlm', aliases: ['phm', 'pm'], chapterCount: 1 },
+  { order: 58, testament: 'NT', name: 'Hebrews', abbreviation: 'Heb', aliases: ['he'], chapterCount: 13 },
+  { order: 59, testament: 'NT', name: 'James', abbreviation: 'Jas', aliases: ['jm', 'ja', 'jam'], chapterCount: 5 },
+  { order: 60, testament: 'NT', name: '1 Peter', abbreviation: '1Pet', aliases: ['1 pe', '1pt', 'i pet'], chapterCount: 5 },
+  { order: 61, testament: 'NT', name: '2 Peter', abbreviation: '2Pet', aliases: ['2 pe', '2pt', 'ii pet'], chapterCount: 3 },
+  { order: 62, testament: 'NT', name: '1 John', abbreviation: '1John', aliases: ['1 jn', '1 jhn', 'i john'], chapterCount: 5 },
+  { order: 63, testament: 'NT', name: '2 John', abbreviation: '2John', aliases: ['2 jn', '2 jhn', 'ii john'], chapterCount: 1 },
+  { order: 64, testament: 'NT', name: '3 John', abbreviation: '3John', aliases: ['3 jn', '3 jhn', 'iii john'], chapterCount: 1 },
+  { order: 65, testament: 'NT', name: 'Jude', abbreviation: 'Jude', aliases: ['jd'], chapterCount: 1 },
+  { order: 66, testament: 'NT', name: 'Revelation', abbreviation: 'Rev', aliases: ['re', 'apocalypse'], chapterCount: 22 },
+];
+

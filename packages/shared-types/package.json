@@ -1,0 +1,13 @@
+{
+  "name": "@scripture-studio/shared-types",
+  "version": "1.0.0",
+  "description": "Universal domain models, IPC schemas, and contracts for Scripture Studio",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}
