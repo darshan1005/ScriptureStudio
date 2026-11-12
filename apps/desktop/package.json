@@ -1,5 +1,5 @@
 {
-  "name": "@scripture-studio/desktop",
+  "name": "scripture-studio",
   "version": "1.0.0",
   "description": "Scripture Studio — Electron Windows Desktop Presentation Host",
   "author": "Scripture Studio Team",
@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -p tsconfig.node.json && vite build",
-    "package": "electron-builder --config electron-builder.json",
+    "package": "node --max-old-space-size=4096 ../../node_modules/electron-builder/cli.js --config electron-builder.json",
     "preview": "vite preview"
   },
   "dependencies": {

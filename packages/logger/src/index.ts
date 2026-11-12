@@ -25,7 +25,7 @@ export class Logger {
     return LEVEL_WEIGHTS[level] >= LEVEL_WEIGHTS[this.minLevel];
   }
 
-  private format(level: LogLevel, message: string, ...args: unknown[]): string {
+  private format(level: LogLevel, message: string): string {
     const timestamp = new Date().toISOString();
     return `[${timestamp}] [${level.toUpperCase()}] [${this.namespace}] ${message}`;
   }

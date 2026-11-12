@@ -1,9 +1,10 @@
 {
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
   "appId": "com.scripturestudio.app",
-  "productName": "Scripture Studio",
+  "productName": "ScriptureStudio",
   "electronVersion": "34.5.8",
   "copyright": "Copyright © 2026 Scripture Studio Project",
+  "artifactName": "ScriptureStudio-Setup-${version}.${ext}",
   "directories": {
     "output": "release"
   },
@@ -27,7 +28,7 @@
     "allowToChangeInstallationDirectory": true,
     "createDesktopShortcut": true,
     "createStartMenuShortcut": true,
-    "shortcutName": "Scripture Studio"
+    "shortcutName": "ScriptureStudio",
+    "differentialPackage": false
   }
 }
-

@@ -1,6 +1,5 @@
 import {
   PresentationActionResponse,
-  PresentationMode,
   PresentationStateDto,
   SlideContentDto,
   TakeLiveRequest,

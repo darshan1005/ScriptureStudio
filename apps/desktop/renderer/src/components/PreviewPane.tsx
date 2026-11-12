@@ -17,7 +17,6 @@ export default function PreviewPane({
   onPrevVerse,
 }: PreviewPaneProps): React.JSX.Element {
   const slide = state?.previewSlide;
-  const isLive = state?.mode === 'LIVE';
 
   const bg = activeTheme?.config.background;
   let bgStyle: React.CSSProperties = {

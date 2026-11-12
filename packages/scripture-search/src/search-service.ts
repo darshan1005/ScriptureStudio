@@ -58,7 +58,6 @@ export class ScriptureSearchService {
     const offset = req.offset || 0;
     const versionId = req.versionId || 'kjv';
     const rangeSql = this.buildRangeSql(req.range);
-    const wholeWordsOnly = req.wholeWordsOnly !== false;
     const useWildcards = Boolean(req.useWildcards);
     const accentSensitive = Boolean(req.accentSensitive);
 

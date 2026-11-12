@@ -5,7 +5,7 @@ import { registerBibleIpcHandlers } from './bible-handlers.js';
 import { PresentationController, registerPresentationIpcHandlers } from './presentation-handlers.js';
 import { registerDisplayIpcHandlers } from './display-handlers.js';
 import { createLogger } from '@scripture-studio/logger';
-import { ProgramDto, SaveProgramRequest, SaveThemeRequest, SearchFullTextRequest, ThemeDto } from '@scripture-studio/shared-types';
+import { SaveProgramRequest, SaveThemeRequest, SearchFullTextRequest } from '@scripture-studio/shared-types';
 
 const logger = createLogger('IpcDispatcher');
 

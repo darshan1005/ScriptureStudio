@@ -3,14 +3,32 @@ import path from 'path';
 import { pathToFileURL } from 'url';
 import { DatabaseClient } from '@scripture-studio/database';
 import { createLogger } from '@scripture-studio/logger';
-import { createControlStudioWindow } from './windows/control-studio.js';
+import { createControlStudioWindow, getControlStudioWindow } from './windows/control-studio.js';
 import { registerAllIpcHandlers } from './ipc/index.js';
 
 const logger = createLogger('ElectronMain');
 
-// High DPI & hardware acceleration switches
+// Ensure single instance lock to prevent multi-process GPU cache & SQLite file locks
+const gotSingleInstanceLock = app.requestSingleInstanceLock();
+if (!gotSingleInstanceLock) {
+  logger.warn('Another instance of Scripture Studio is already running. Quitting secondary instance.');
+  app.quit();
+  process.exit(0);
+}
+
+app.on('second-instance', () => {
+  const win = getControlStudioWindow();
+  if (win) {
+    if (win.isMinimized()) win.restore();
+    win.focus();
+  }
+});
+
+// Windows High DPI & GPU cache/rendering stability switches
 app.commandLine.appendSwitch('high-dpi-support', '1');
 app.commandLine.appendSwitch('force-device-scale-factor', '1');
+app.commandLine.appendSwitch('disable-gpu-shader-disk-cache');
+app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion');
 
 let dbClient: DatabaseClient | null = null;
 

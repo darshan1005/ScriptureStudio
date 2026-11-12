@@ -50,27 +50,31 @@ export default function BibleReaderWorkspace({
       setSelectedVerseNumber(null);
     } else if (typeof activeVerseNumber === 'number') {
       setSelectedVerseNumber(activeVerseNumber);
-      const el = document.getElementById(`verse-${activeVerseNumber}`);
-      el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
   }, [activeVerseNumber]);
 
-  // Sync book & chapter if presentation navigates (e.g. via Arrow Keys or Next/Prev buttons across chapter boundaries)
+  // Smooth scroll to active verse when verse or chapter list updates
   useEffect(() => {
-    if (activeReference) {
-      if (activeReference.bookId && selectedBook && activeReference.bookId.toLowerCase() !== selectedBook.id.toLowerCase()) {
+    if (typeof selectedVerseNumber === 'number' && verses.length > 0) {
+      const el = document.getElementById(`verse-${selectedVerseNumber}`);
+      el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [selectedVerseNumber, verses]);
+
+  // Sync book & chapter if presentation navigates or recalls from history
+  useEffect(() => {
+    if (activeReference && books.length > 0) {
+      if (activeReference.bookId) {
         const found = books.find((b) => b.id.toLowerCase() === activeReference.bookId.toLowerCase());
-        if (found) setSelectedBook(found);
+        if (found && (!selectedBook || selectedBook.id.toLowerCase() !== found.id.toLowerCase())) {
+          setSelectedBook(found);
+        }
       }
       if (typeof activeReference.chapterNumber === 'number' && activeReference.chapterNumber !== selectedChapter) {
         setSelectedChapter(activeReference.chapterNumber);
       }
       if (typeof activeReference.startVerse === 'number') {
         setSelectedVerseNumber(activeReference.startVerse);
-        setTimeout(() => {
-          const el = document.getElementById(`verse-${activeReference.startVerse}`);
-          el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }, 80);
       }
     }
   }, [activeReference, books]);
@@ -109,15 +113,28 @@ export default function BibleReaderWorkspace({
       window.scriptureStudioApi.bible.getBooks({ versionId: selectedVersionId }).then((res) => {
         setBooks(res.books);
         if (res.books.length > 0 && res.books[0]) {
-          const defaultBook = res.books.find((b) => b.name === 'Genesis') || res.books[0];
-          setSelectedBook(defaultBook);
-          setSelectedChapter(1);
+          let targetBook = res.books[0];
+          if (activeReference?.bookId) {
+            const matched = res.books.find(
+              (b) => b.id.toLowerCase() === activeReference.bookId.toLowerCase()
+            );
+            if (matched) targetBook = matched;
+          } else {
+            const genesis = res.books.find((b) => b.name === 'Genesis');
+            if (genesis) targetBook = genesis;
+          }
+          setSelectedBook(targetBook);
+          if (activeReference?.chapterNumber) {
+            setSelectedChapter(activeReference.chapterNumber);
+          } else {
+            setSelectedChapter(1);
+          }
         }
       });
     }
   }, [selectedVersionId]);
 
-  // Load primary chapter verses
+  // Load primary chapter verses without triggering auto-selection side-effects
   useEffect(() => {
     if (window.scriptureStudioApi && selectedBook) {
       window.scriptureStudioApi.bible
@@ -128,15 +145,9 @@ export default function BibleReaderWorkspace({
         })
         .then((res) => {
           setVerses(res.verses);
-          const initVerse = 1;
-          setSelectedVerseNumber(initVerse);
-          onSelectVerse(
-            selectedVersionId,
-            selectedBook.id,
-            selectedChapter,
-            initVerse,
-            secondaryVersionId || undefined
-          );
+          if (activeVerseNumber) {
+            setSelectedVerseNumber(activeVerseNumber);
+          }
         })
         .catch(() => {
           setVerses([]);

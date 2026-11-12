@@ -1,4 +1,4 @@
-import { ipcMain, screen, BrowserWindow } from 'electron';
+import { ipcMain, screen } from 'electron';
 import { AssignDisplayRoleRequest, DisplayDto, DisplayRole } from '@scripture-studio/shared-types';
 import { createLogger } from '@scripture-studio/logger';
 import {

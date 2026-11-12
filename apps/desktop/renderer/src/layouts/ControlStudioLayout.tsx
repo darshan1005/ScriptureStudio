@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { PresentationHistoryEntryDto, PresentationStateDto, ProgramItemDto, SearchFullTextResultItem, ThemeDto } from '@scripture-studio/shared-types';
+import {
+  DisplayDto,
+  PresentationHistoryEntryDto,
+  PresentationStateDto,
+  ProgramItemDto,
+  SearchFullTextResultItem,
+  ThemeDto,
+} from '@scripture-studio/shared-types';
 import BibleReaderWorkspace from '../components/BibleReaderWorkspace.js';
 import { SearchWorkspace } from '../components/SearchWorkspace.js';
 import { ProgramEditorWorkspace } from '../components/ProgramEditorWorkspace.js';
@@ -138,6 +145,7 @@ export default function ControlStudioLayout(): React.JSX.Element {
         unsubTopology?.();
       };
     }
+    return undefined;
   }, []);
 
   // Keyboard shortcut listener
@@ -718,9 +726,9 @@ export default function ControlStudioLayout(): React.JSX.Element {
           })}
         </aside>
 
-        {/* Central Content Area Switching based on activeTab */}
-        <main style={{ flex: 1, padding: '1rem', overflow: 'hidden' }}>
-          {activeTab === 'bible' && (
+        {/* Central Content Area Switching based on activeTab (stable mount eliminates remount flicker) */}
+        <main style={{ flex: 1, padding: '1rem', overflow: 'hidden', position: 'relative' }}>
+          <div style={{ display: activeTab === 'bible' ? 'flex' : 'none', height: '100%', flexDirection: 'column' }}>
             <BibleReaderWorkspace
               refreshKey={refreshCounter}
               onSelectVerse={handleSelectVerse}
@@ -734,37 +742,37 @@ export default function ControlStudioLayout(): React.JSX.Element {
                   : null
               }
             />
-          )}
+          </div>
 
-          {activeTab === 'search' && (
+          <div style={{ display: activeTab === 'search' ? 'flex' : 'none', height: '100%', flexDirection: 'column' }}>
             <SearchWorkspace
               onStageResult={handleStageSearchResult}
               onTakeLiveResult={handleTakeLiveSearchResult}
             />
-          )}
+          </div>
 
-          {activeTab === 'programs' && (
+          <div style={{ display: activeTab === 'programs' ? 'flex' : 'none', height: '100%', flexDirection: 'column' }}>
             <ProgramEditorWorkspace
               onStageItem={handleStageProgramItem}
               onTakeLiveItem={handleTakeLiveProgramItem}
             />
-          )}
+          </div>
 
-          {activeTab === 'themes' && (
+          <div style={{ display: activeTab === 'themes' ? 'flex' : 'none', height: '100%', flexDirection: 'column' }}>
             <ThemeEditorWorkspace
               onThemeUpdated={(t) => {
                 setActiveTheme(t);
               }}
             />
-          )}
+          </div>
 
-          {activeTab === 'history' && (
+          <div style={{ display: activeTab === 'history' ? 'flex' : 'none', height: '100%', flexDirection: 'column' }}>
             <HistoryWorkspace
               onRecallLive={handleRecallLive}
               onRecallPreview={handleRecallPreview}
               lastUpdatedTimestamp={state?.lastUpdatedTimestamp}
             />
-          )}
+          </div>
         </main>
 
         {/* Right Panel: Preview & Control */}

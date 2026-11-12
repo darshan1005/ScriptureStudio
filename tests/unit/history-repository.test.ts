@@ -147,9 +147,9 @@ describe('HistoryRepository — 24hr Retention & Book Name Mapping', () => {
 
     const recent = repo.getRecent();
     expect(recent.length).toBe(1);
-    expect(recent[0].formattedDisplay).toBe('Genesis 1:5');
-    expect(recent[0].reference.bookName).toBe('Genesis');
-    expect(recent[0].translationAbbr).toBe('KJV');
+    expect(recent[0]!.formattedDisplay).toBe('Genesis 1:5');
+    expect(recent[0]!.reference.bookName).toBe('Genesis');
+    expect(recent[0]!.translationAbbr).toBe('KJV');
   });
 
   it('enforces 24-hour retention window: purges items older than 24 hours', () => {
@@ -184,8 +184,8 @@ describe('HistoryRepository — 24hr Retention & Book Name Mapping', () => {
 
     const entries = repo.getRecent();
     expect(entries.length).toBe(2);
-    expect(entries[0].formattedDisplay).toBe('Romans 8:28');
-    expect(entries[1].formattedDisplay).toBe('John 3:16');
+    expect(entries[0]!.formattedDisplay).toBe('Romans 8:28');
+    expect(entries[1]!.formattedDisplay).toBe('John 3:16');
   });
 
   it('automatically purges legacy placeholder "bookId: book" rows', () => {
@@ -237,6 +237,6 @@ describe('HistoryRepository — 24hr Retention & Book Name Mapping', () => {
 
     const entries = repo.getRecent();
     expect(entries.length).toBe(1);
-    expect(entries[0].presentedAt).toBe(t2);
+    expect(entries[0]!.presentedAt).toBe(t2);
   });
 });
