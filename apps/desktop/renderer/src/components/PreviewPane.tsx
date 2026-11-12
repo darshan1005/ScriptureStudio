@@ -1,9 +1,15 @@
 import React from 'react';
-import { PresentationStateDto, ThemeDto } from '@scripture-studio/shared-types';
+import { BibleVersionDto, PresentationStateDto, ThemeDto } from '@scripture-studio/shared-types';
 
 interface PreviewPaneProps {
   state: PresentationStateDto | null;
   activeTheme: ThemeDto | null;
+  versions?: BibleVersionDto[];
+  primaryVersionId?: string;
+  secondaryVersionId?: string;
+  onPrimaryVersionChange?: (versionId: string) => void;
+  onSecondaryVersionChange?: (versionId: string) => void;
+  onSwapTranslations?: () => void;
   onTakeLive: () => void;
   onNextVerse?: () => void;
   onPrevVerse?: () => void;
@@ -12,6 +18,12 @@ interface PreviewPaneProps {
 export default function PreviewPane({
   state,
   activeTheme,
+  versions = [],
+  primaryVersionId = 'kjv',
+  secondaryVersionId = 'tel',
+  onPrimaryVersionChange,
+  onSecondaryVersionChange,
+  onSwapTranslations,
   onTakeLive,
   onNextVerse,
   onPrevVerse,
@@ -257,6 +269,119 @@ export default function PreviewPane({
             No scripture staged. Select a verse from Bible reader.
           </div>
         )}
+      </div>
+
+      {/* Global Translation Selector (Dedicated Section Below Preview Monitor) */}
+      <div
+        style={{
+          padding: '0.65rem 0.75rem',
+          backgroundColor: '#1E293B',
+          borderRadius: '8px',
+          border: '1px solid #334155',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.5rem',
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div
+            style={{
+              fontSize: '0.8rem',
+              fontWeight: 600,
+              color: '#94A3B8',
+              letterSpacing: '0.02em',
+            }}
+          >
+            Translations
+          </div>
+
+          {secondaryVersionId && onSwapTranslations && (
+            <button
+              type="button"
+              onClick={onSwapTranslations}
+              style={{
+                fontSize: '0.75rem',
+                padding: '2px 8px',
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                color: '#94A3B8',
+                border: '1px solid #334155',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '3px',
+                fontWeight: 500,
+                transition: 'all 0.15s ease',
+              }}
+              title="Swap primary and secondary translations"
+            >
+              <span>⇄ Swap</span>
+            </button>
+          )}
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+          {/* Primary Translation */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+            <span style={{ fontSize: '0.74rem', fontWeight: 500, color: '#94A3B8' }}>
+              Primary:
+            </span>
+            <select
+              value={primaryVersionId}
+              onChange={(e) => onPrimaryVersionChange?.(e.target.value)}
+              style={{
+                fontSize: '0.82rem',
+                padding: '0.35rem 0.5rem',
+                backgroundColor: '#0F172A',
+                color: '#E2E8F0',
+                fontWeight: 500,
+                border: '1px solid #334155',
+                borderRadius: '5px',
+                width: '100%',
+                cursor: 'pointer',
+              }}
+              title="Primary translation to project"
+            >
+              {versions.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.abbreviation} — {v.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Secondary Translation */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+            <span style={{ fontSize: '0.74rem', fontWeight: 500, color: '#94A3B8' }}>
+              Secondary:
+            </span>
+            <select
+              value={secondaryVersionId}
+              onChange={(e) => onSecondaryVersionChange?.(e.target.value)}
+              style={{
+                fontSize: '0.82rem',
+                padding: '0.35rem 0.5rem',
+                backgroundColor: '#0F172A',
+                color: '#E2E8F0',
+                fontWeight: 500,
+                border: '1px solid #334155',
+                borderRadius: '5px',
+                width: '100%',
+                cursor: 'pointer',
+              }}
+              title="Secondary translation to project"
+            >
+              <option value="">None</option>
+              {versions
+                .filter((v) => v.id !== primaryVersionId)
+                .map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.abbreviation} — {v.name}
+                  </option>
+                ))}
+            </select>
+          </div>
+        </div>
       </div>
 
       {/* Quick Verse Navigation & Take Live */}

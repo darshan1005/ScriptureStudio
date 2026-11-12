@@ -131,6 +131,7 @@ export interface PreviewReferenceRequest {
   versionId: string;
   secondaryVersionId?: string;
   bookId: string;
+  bookName?: string;
   chapterNumber: number;
   startVerse: number;
   endVerse?: number;

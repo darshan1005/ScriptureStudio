@@ -66,7 +66,20 @@ export class PresentationController {
 
   previewReference(req: PreviewReferenceRequest): PresentationActionResponse {
     try {
-      const chapterData = this.bibleRepo.getChapter(req.versionId, req.bookId, req.chapterNumber);
+      let chapterData = this.bibleRepo.getChapter(req.versionId, req.bookId, req.chapterNumber);
+      if (!chapterData) {
+        // Fallback: match book by order, name, or abbreviation within target versionId
+        const books = this.bibleRepo.getBooks(req.versionId);
+        const matchedBook = books.find(
+          (b) =>
+            b.id.toLowerCase() === req.bookId.toLowerCase() ||
+            (req.bookName && b.name.toLowerCase() === req.bookName.toLowerCase()) ||
+            (req.bookName && b.abbreviation.toLowerCase() === req.bookName.toLowerCase())
+        );
+        if (matchedBook) {
+          chapterData = this.bibleRepo.getChapter(req.versionId, matchedBook.id, req.chapterNumber);
+        }
+      }
       if (!chapterData) {
         return { success: false, newState: this.state, error: 'Chapter not found' };
       }

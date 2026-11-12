@@ -2,13 +2,19 @@ import React, { useEffect, useState } from 'react';
 import { BibleVersionDto, ProgramDto, ProgramItemDto } from '@scripture-studio/shared-types';
 
 interface ProgramEditorWorkspaceProps {
-  onStageItem: (item: ProgramItemDto) => void;
-  onTakeLiveItem: (item: ProgramItemDto) => void;
+  onStageItem: (item: ProgramItemDto, secondaryVersionId?: string) => void;
+  onTakeLiveItem: (item: ProgramItemDto, secondaryVersionId?: string) => void;
+  primaryVersionId?: string;
+  onPrimaryVersionChange?: (versionId: string) => void;
+  secondaryVersionId?: string;
+  onSecondaryVersionChange?: (versionId: string) => void;
 }
 
 export const ProgramEditorWorkspace: React.FC<ProgramEditorWorkspaceProps> = ({
   onStageItem,
   onTakeLiveItem,
+  primaryVersionId: propPrimaryVersionId,
+  secondaryVersionId: propSecondaryVersionId,
 }) => {
   const [programs, setPrograms] = useState<ProgramDto[]>([]);
   const [activeProgram, setActiveProgram] = useState<ProgramDto | null>(null);
@@ -16,9 +22,23 @@ export const ProgramEditorWorkspace: React.FC<ProgramEditorWorkspaceProps> = ({
   const [newVerseRef, setNewVerseRef] = useState<string>('');
   const [newItemTitle, setNewItemTitle] = useState<string>('');
   const [versions, setVersions] = useState<BibleVersionDto[]>([]);
-  const [selectedVersionId, setSelectedVersionId] = useState<string>('kjv');
+  const [selectedVersionId, setSelectedVersionId] = useState<string>(propPrimaryVersionId || 'kjv');
+  const [secondaryVersionId, setSecondaryVersionId] = useState<string>(propSecondaryVersionId ?? 'tel');
   const [inputError, setInputError] = useState<string>('');
   const [isAddingItem, setIsAddingItem] = useState<boolean>(false);
+
+  // Keep primaryVersionId in sync with global parent
+  useEffect(() => {
+    if (propPrimaryVersionId && propPrimaryVersionId !== selectedVersionId) {
+      setSelectedVersionId(propPrimaryVersionId);
+    }
+  }, [propPrimaryVersionId]);
+
+  useEffect(() => {
+    if (propSecondaryVersionId !== undefined && propSecondaryVersionId !== secondaryVersionId) {
+      setSecondaryVersionId(propSecondaryVersionId);
+    }
+  }, [propSecondaryVersionId]);
 
   const loadPrograms = async () => {
     if (window.scriptureStudioApi) {
@@ -108,11 +128,15 @@ export const ProgramEditorWorkspace: React.FC<ProgramEditorWorkspaceProps> = ({
         return;
       }
 
-      // Assign chosen translation
+      // Assign chosen primary and secondary translations
       const refWithVersion = {
         ...parsed.reference,
         versionId: selectedVersionId,
+        secondaryVersionId: secondaryVersionId || undefined,
       };
+
+      const primaryAbbr = versions.find((v) => v.id === selectedVersionId)?.abbreviation || selectedVersionId.toUpperCase();
+      const secAbbr = secondaryVersionId ? versions.find((v) => v.id === secondaryVersionId)?.abbreviation || secondaryVersionId.toUpperCase() : null;
 
       const newItem: ProgramItemDto = {
         id: `item_${Date.now()}`,
@@ -121,7 +145,7 @@ export const ProgramEditorWorkspace: React.FC<ProgramEditorWorkspaceProps> = ({
         itemType: 'SCRIPTURE',
         reference: refWithVersion,
         customTitle: newItemTitle.trim() || parsed.formattedDisplay,
-        notes: `${selectedVersionId.toUpperCase()} • ${parsed.formattedDisplay}`,
+        notes: `${primaryAbbr}${secAbbr ? ` + ${secAbbr}` : ''} • ${parsed.formattedDisplay}`,
       };
 
       const updatedProgram: ProgramDto = {
@@ -308,9 +332,9 @@ export const ProgramEditorWorkspace: React.FC<ProgramEditorWorkspaceProps> = ({
                 style={{
                   padding: '0.4rem 0.75rem',
                   fontSize: '0.78rem',
-                  backgroundColor: 'rgba(56, 189, 248, 0.1)',
-                  color: '#38BDF8',
-                  border: '1px dashed #38BDF8',
+                  backgroundColor: '#1E293B',
+                  color: '#CBD5E1',
+                  border: '1px dashed #475569',
                   borderRadius: '4px',
                   cursor: 'pointer',
                   fontWeight: 600,
@@ -463,21 +487,6 @@ export const ProgramEditorWorkspace: React.FC<ProgramEditorWorkspaceProps> = ({
                   />
                 </div>
 
-                {versions.length > 0 && (
-                  <select
-                    value={selectedVersionId}
-                    onChange={(e) => setSelectedVersionId(e.target.value)}
-                    style={{ fontSize: '0.85rem', padding: '0.4rem 0.6rem' }}
-                    title="Translation to project"
-                  >
-                    {versions.map((v) => (
-                      <option key={v.id} value={v.id}>
-                        {v.abbreviation}
-                      </option>
-                    ))}
-                  </select>
-                )}
-
                 <button
                   type="submit"
                   className="btn-primary"
@@ -516,133 +525,165 @@ export const ProgramEditorWorkspace: React.FC<ProgramEditorWorkspaceProps> = ({
                   </p>
                 </div>
               ) : (
-                activeProgram.items.map((item, index) => (
-                  <div
-                    key={item.id}
-                    onClick={() => onStageItem(item)}
-                    onDoubleClick={() => onTakeLiveItem(item)}
-                    style={{
-                      padding: '0.75rem 1rem',
-                      borderRadius: '6px',
-                      backgroundColor: 'var(--bg-card)',
-                      border: '1px solid var(--border-color)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      cursor: 'pointer',
-                      transition: 'border-color 0.15s, background-color 0.15s',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = 'var(--primary)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = 'var(--border-color)';
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                      <span
-                        style={{
-                          width: '28px',
-                          height: '28px',
-                          borderRadius: '50%',
-                          backgroundColor: '#1E293B',
-                          color: '#38BDF8',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '0.82rem',
-                          fontWeight: 700,
-                        }}
-                      >
-                        {index + 1}
-                      </span>
+                activeProgram.items.map((item, index) => {
+                  const effectiveSec = item.reference?.secondaryVersionId || (secondaryVersionId ? secondaryVersionId : undefined);
+                  const primAbbr = item.reference?.versionId?.toUpperCase() || 'KJV';
+                  const secAbbr = effectiveSec?.toUpperCase();
 
-                      <div>
-                        <div style={{ fontWeight: 700, color: '#F59E0B', fontSize: '0.92rem' }}>
-                          {item.customTitle || 'Scripture'}
-                        </div>
-                        <div style={{ fontSize: '0.82rem', color: '#94A3B8', marginTop: '2px' }}>
-                          {item.reference ? `${item.reference.bookName || ''} ${item.reference.chapterNumber}:${item.reference.startVerse}${item.reference.endVerse ? `-${item.reference.endVerse}` : ''}` : ''}
-                          <span style={{ marginLeft: '0.5rem', color: 'var(--primary)', fontWeight: 600 }}>
-                            ({item.reference?.versionId?.toUpperCase() || 'KJV'})
-                          </span>
+                  return (
+                    <div
+                      key={item.id}
+                      onClick={() => onStageItem(item, effectiveSec)}
+                      onDoubleClick={() => onTakeLiveItem(item, effectiveSec)}
+                      style={{
+                        padding: '0.75rem 1rem',
+                        borderRadius: '6px',
+                        backgroundColor: 'var(--bg-card)',
+                        border: '1px solid var(--border-color)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        cursor: 'pointer',
+                        transition: 'border-color 0.15s, background-color 0.15s',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = 'var(--primary)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = 'var(--border-color)';
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <span
+                          style={{
+                            width: '28px',
+                            height: '28px',
+                            borderRadius: '50%',
+                            backgroundColor: '#0F172A',
+                            color: '#94A3B8',
+                            border: '1px solid #334155',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '0.82rem',
+                            fontWeight: 600,
+                          }}
+                        >
+                          {index + 1}
+                        </span>
+
+                        <div>
+                          <div style={{ fontWeight: 600, color: '#E2E8F0', fontSize: '0.92rem' }}>
+                            {item.customTitle || 'Scripture'}
+                          </div>
+                          <div style={{ fontSize: '0.82rem', color: '#94A3B8', marginTop: '3px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                            <span>
+                              {item.reference ? `${item.reference.bookName || ''} ${item.reference.chapterNumber}:${item.reference.startVerse}${item.reference.endVerse ? `-${item.reference.endVerse}` : ''}` : ''}
+                            </span>
+                            <span
+                              style={{
+                                backgroundColor: '#334155',
+                                color: '#CBD5E1',
+                                padding: '1px 5px',
+                                borderRadius: '3px',
+                                fontSize: '0.72rem',
+                                fontWeight: 600,
+                              }}
+                            >
+                              {primAbbr}
+                            </span>
+                            {effectiveSec && (
+                              <span
+                                style={{
+                                  backgroundColor: '#1E293B',
+                                  border: '1px solid #475569',
+                                  color: '#94A3B8',
+                                  padding: '1px 5px',
+                                  borderRadius: '3px',
+                                  fontSize: '0.72rem',
+                                  fontWeight: 600,
+                                }}
+                              >
+                                + {secAbbr}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      {/* Reorder Buttons */}
-                      <button
-                        type="button"
-                        disabled={index === 0}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleMoveItem(index, 'up');
-                        }}
-                        style={{
-                          padding: '0.25rem 0.45rem',
-                          fontSize: '0.75rem',
-                          backgroundColor: 'transparent',
-                          color: index === 0 ? '#475569' : '#94A3B8',
-                          border: '1px solid var(--border-color)',
-                          borderRadius: '4px',
-                          cursor: index === 0 ? 'not-allowed' : 'pointer',
-                        }}
-                        title="Move Up"
-                      >
-                        ▲
-                      </button>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        {/* Reorder Buttons */}
+                        <button
+                          type="button"
+                          disabled={index === 0}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMoveItem(index, 'up');
+                          }}
+                          style={{
+                            padding: '0.25rem 0.45rem',
+                            fontSize: '0.75rem',
+                            backgroundColor: 'transparent',
+                            color: index === 0 ? '#475569' : '#94A3B8',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '4px',
+                            cursor: index === 0 ? 'not-allowed' : 'pointer',
+                          }}
+                          title="Move Up"
+                        >
+                          ▲
+                        </button>
 
-                      <button
-                        type="button"
-                        disabled={index === activeProgram.items.length - 1}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleMoveItem(index, 'down');
-                        }}
-                        style={{
-                          padding: '0.25rem 0.45rem',
-                          fontSize: '0.75rem',
-                          backgroundColor: 'transparent',
-                          color: index === activeProgram.items.length - 1 ? '#475569' : '#94A3B8',
-                          border: '1px solid var(--border-color)',
-                          borderRadius: '4px',
-                          cursor: index === activeProgram.items.length - 1 ? 'not-allowed' : 'pointer',
-                        }}
-                        title="Move Down"
-                      >
-                        ▼
-                      </button>
+                        <button
+                          type="button"
+                          disabled={index === activeProgram.items.length - 1}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMoveItem(index, 'down');
+                          }}
+                          style={{
+                            padding: '0.25rem 0.45rem',
+                            fontSize: '0.75rem',
+                            backgroundColor: 'transparent',
+                            color: index === activeProgram.items.length - 1 ? '#475569' : '#94A3B8',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '4px',
+                            cursor: index === activeProgram.items.length - 1 ? 'not-allowed' : 'pointer',
+                          }}
+                          title="Move Down"
+                        >
+                          ▼
+                        </button>
 
-                      {/* Preview Button */}
-                      <button
-                        type="button"
-                        className="btn-secondary"
-                        style={{ padding: '0.3rem 0.65rem', fontSize: '0.78rem' }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onStageItem(item);
-                        }}
-                        title="Stage in preview monitor"
-                      >
-                        👁️ Preview
-                      </button>
+                        {/* Preview Button */}
+                        <button
+                          type="button"
+                          className="btn-secondary"
+                          style={{ padding: '0.3rem 0.65rem', fontSize: '0.78rem' }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onStageItem(item, effectiveSec);
+                          }}
+                          title="Stage in preview monitor"
+                        >
+                          👁️ Preview
+                        </button>
 
-                      {/* Live Button */}
-                      <button
-                        type="button"
-                        className="btn-primary"
-                        style={{ padding: '0.3rem 0.75rem', fontSize: '0.78rem', fontWeight: 600 }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onTakeLiveItem(item);
-                        }}
-                        title="Take live immediately on audience display"
-                      >
-                        ⚡ Live
-                      </button>
+                        {/* Live Button */}
+                        <button
+                          type="button"
+                          className="btn-primary"
+                          style={{ padding: '0.3rem 0.75rem', fontSize: '0.78rem', fontWeight: 600 }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onTakeLiveItem(item, effectiveSec);
+                          }}
+                          title="Take live immediately on audience display"
+                        >
+                          ⚡ Live
+                        </button>
 
-                      {/* Delete Item Button */}
+                        {/* Delete Item Button */}
                       <button
                         type="button"
                         onClick={(e) => {
@@ -664,8 +705,9 @@ export const ProgramEditorWorkspace: React.FC<ProgramEditorWorkspaceProps> = ({
                       </button>
                     </div>
                   </div>
-                ))
-              )}
+                );
+              })
+            )}
             </div>
           </>
         ) : (

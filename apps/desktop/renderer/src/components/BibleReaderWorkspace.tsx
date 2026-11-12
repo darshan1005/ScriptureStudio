@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import {
   BibleBookDto,
   BibleVerseDto,
-  BibleVersionDto,
   ScriptureReference,
 } from '@scripture-studio/shared-types';
 
@@ -24,6 +23,10 @@ interface BibleReaderWorkspaceProps {
   activeReference?: ScriptureReference | null;
   activeVerseNumber?: number | null;
   refreshKey?: number;
+  primaryVersionId?: string;
+  onPrimaryVersionChange?: (versionId: string) => void;
+  secondaryVersionId?: string;
+  onSecondaryVersionChange?: (versionId: string) => void;
 }
 
 export default function BibleReaderWorkspace({
@@ -32,10 +35,25 @@ export default function BibleReaderWorkspace({
   activeReference,
   activeVerseNumber,
   refreshKey,
+  primaryVersionId: propPrimaryVersionId,
+  secondaryVersionId: propSecondaryVersionId,
 }: BibleReaderWorkspaceProps): React.JSX.Element {
-  const [versions, setVersions] = useState<BibleVersionDto[]>([]);
-  const [selectedVersionId, setSelectedVersionId] = useState<string>('kjv');
-  const [secondaryVersionId, setSecondaryVersionId] = useState<string>('tel');
+  const [selectedVersionId, setSelectedVersionId] = useState<string>(propPrimaryVersionId || 'kjv');
+  const [secondaryVersionId, setSecondaryVersionId] = useState<string>(propSecondaryVersionId || 'tel');
+
+  // Keep primaryVersionId in sync with global parent
+  useEffect(() => {
+    if (propPrimaryVersionId && propPrimaryVersionId !== selectedVersionId) {
+      setSelectedVersionId(propPrimaryVersionId);
+    }
+  }, [propPrimaryVersionId]);
+
+  // Keep secondaryVersionId in sync with global parent
+  useEffect(() => {
+    if (propSecondaryVersionId !== undefined && propSecondaryVersionId !== secondaryVersionId) {
+      setSecondaryVersionId(propSecondaryVersionId);
+    }
+  }, [propSecondaryVersionId]);
   const [books, setBooks] = useState<BibleBookDto[]>([]);
   const [selectedBook, setSelectedBook] = useState<BibleBookDto | null>(null);
   const [selectedChapter, setSelectedChapter] = useState<number>(1);
@@ -83,7 +101,6 @@ export default function BibleReaderWorkspace({
   useEffect(() => {
     if (window.scriptureStudioApi) {
       window.scriptureStudioApi.bible.getVersions().then((res) => {
-        setVersions(res.versions);
         if (res.versions.length > 0) {
           // Keep current selected if still present; else fallback
           setSelectedVersionId((prev) => {
@@ -260,51 +277,6 @@ export default function BibleReaderWorkspace({
             <span>Lookup</span>
           </button>
         </form>
-
-        {/* Primary Translation */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-          <span style={{ fontSize: '0.85rem', color: 'var(--text-dim)', fontWeight: 600 }}>Primary:</span>
-          <select
-            value={selectedVersionId}
-            onChange={(e) => setSelectedVersionId(e.target.value)}
-          >
-            {versions.map((v) => (
-              <option key={v.id} value={v.id}>
-                {v.abbreviation} — {v.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Secondary / Parallel Translation (e.g. Telugu) */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-          <span style={{ fontSize: '0.85rem', color: 'var(--text-dim)', fontWeight: 600 }}>Parallel:</span>
-          <select
-            value={secondaryVersionId}
-            onChange={(e) => {
-              const secId = e.target.value;
-              setSecondaryVersionId(secId);
-              if (selectedBook && selectedVerseNumber) {
-                onSelectVerse(
-                  selectedVersionId,
-                  selectedBook.id,
-                  selectedChapter,
-                  selectedVerseNumber,
-                  secId || undefined
-                );
-              }
-            }}
-          >
-            <option value="">None (Single Version)</option>
-            {versions
-              .filter((v) => v.id !== selectedVersionId)
-              .map((v) => (
-                <option key={v.id} value={v.id}>
-                  {v.abbreviation} — {v.name}
-                </option>
-              ))}
-          </select>
-        </div>
       </div>
 
       {/* Navigation Strip: Book, Chapter, and Verse Dropdowns */}
@@ -434,7 +406,7 @@ export default function BibleReaderWorkspace({
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                  <strong style={{ color: '#F59E0B', minWidth: '24px', flexShrink: 0 }}>
+                  <strong style={{ color: '#94A3B8', minWidth: '24px', flexShrink: 0 }}>
                     {v.verseNumber}
                   </strong>
                   <div style={{ flex: 1 }}>
@@ -444,9 +416,9 @@ export default function BibleReaderWorkspace({
                         style={{
                           marginTop: '4px',
                           fontSize: '0.92rem',
-                          color: '#FDE68A',
+                          color: '#94A3B8',
                           lineHeight: 1.5,
-                          fontWeight: 500,
+                          fontWeight: 400,
                         }}
                       >
                         {secondaryVerses.get(v.verseNumber)}

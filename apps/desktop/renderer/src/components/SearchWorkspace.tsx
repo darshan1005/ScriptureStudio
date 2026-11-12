@@ -2,8 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { BibleVersionDto, SearchFullTextResultItem, SearchScopeRange } from '@scripture-studio/shared-types';
 
 interface SearchWorkspaceProps {
-  onStageResult: (item: SearchFullTextResultItem) => void;
-  onTakeLiveResult: (item: SearchFullTextResultItem) => void;
+  onStageResult: (item: SearchFullTextResultItem, secondaryVersionId?: string) => void;
+  onTakeLiveResult: (item: SearchFullTextResultItem, secondaryVersionId?: string) => void;
+  primaryVersionId?: string;
+  onPrimaryVersionChange?: (versionId: string) => void;
+  secondaryVersionId?: string;
+  onSecondaryVersionChange?: (versionId: string) => void;
 }
 
 const DEFAULT_SHORTCUTS = [
@@ -23,6 +27,8 @@ const SHORTCUTS_STORAGE_KEY = 'scripture_studio_search_shortcuts';
 export const SearchWorkspace: React.FC<SearchWorkspaceProps> = ({
   onStageResult,
   onTakeLiveResult,
+  primaryVersionId: propPrimaryVersionId,
+  secondaryVersionId: propSecondaryVersionId,
 }) => {
   const [query, setQuery] = useState<string>('');
   const [results, setResults] = useState<SearchFullTextResultItem[]>([]);
@@ -34,7 +40,22 @@ export const SearchWorkspace: React.FC<SearchWorkspaceProps> = ({
   const [useWildcards, setUseWildcards] = useState<boolean>(false);
   const [accentSensitive, setAccentSensitive] = useState<boolean>(false);
   const [versions, setVersions] = useState<BibleVersionDto[]>([]);
-  const [selectedVersionId, setSelectedVersionId] = useState<string>('kjv');
+  const [selectedVersionId, setSelectedVersionId] = useState<string>(propPrimaryVersionId || 'kjv');
+  const [secondaryVersionId, setSecondaryVersionId] = useState<string>(propSecondaryVersionId ?? 'tel');
+  const [secondaryVerses, setSecondaryVerses] = useState<Record<string, string>>({});
+
+  // Keep primaryVersionId in sync with global parent
+  useEffect(() => {
+    if (propPrimaryVersionId && propPrimaryVersionId !== selectedVersionId) {
+      setSelectedVersionId(propPrimaryVersionId);
+    }
+  }, [propPrimaryVersionId]);
+
+  useEffect(() => {
+    if (propSecondaryVersionId !== undefined && propSecondaryVersionId !== secondaryVersionId) {
+      setSecondaryVersionId(propSecondaryVersionId);
+    }
+  }, [propSecondaryVersionId]);
 
   useEffect(() => {
     if (window.scriptureStudioApi) {
@@ -44,10 +65,69 @@ export const SearchWorkspace: React.FC<SearchWorkspaceProps> = ({
           if (!res.versions.some((v) => v.id === selectedVersionId)) {
             setSelectedVersionId(res.versions[0]?.id || 'kjv');
           }
+          if (secondaryVersionId && !res.versions.some((v) => v.id === secondaryVersionId)) {
+            const tel = res.versions.find((v) => v.id === 'tel');
+            setSecondaryVersionId(tel ? 'tel' : '');
+          }
         }
       });
     }
   }, []);
+
+  // Fetch secondary translation verses for search results
+  useEffect(() => {
+    if (!secondaryVersionId || results.length === 0 || !window.scriptureStudioApi) {
+      setSecondaryVerses({});
+      return;
+    }
+
+    let isMounted = true;
+    (async () => {
+      try {
+        const secBooksRes = await window.scriptureStudioApi.bible.getBooks({ versionId: secondaryVersionId });
+        const secBooks = secBooksRes.books || [];
+        const newMap: Record<string, string> = {};
+
+        // Fetch up to 40 results
+        const targetResults = results.slice(0, 40);
+        await Promise.all(
+          targetResults.map(async (r) => {
+            const secBook = secBooks.find(
+              (b) =>
+                b.name.toLowerCase() === r.bookName.toLowerCase() ||
+                b.abbreviation.toLowerCase() === r.bookName.toLowerCase()
+            );
+            if (!secBook) return;
+
+            try {
+              const res = await window.scriptureStudioApi.bible.getVerseRange({
+                versionId: secondaryVersionId,
+                bookId: secBook.id,
+                chapterNumber: r.chapterNumber,
+                startVerse: r.verseNumber,
+                endVerse: r.verseNumber,
+              });
+
+              if (res.verses && res.verses.length > 0 && res.verses[0]) {
+                const key = `${r.bookName}_${r.chapterNumber}_${r.verseNumber}`;
+                newMap[key] = res.verses[0].verseText;
+              }
+            } catch {}
+          })
+        );
+
+        if (isMounted) {
+          setSecondaryVerses(newMap);
+        }
+      } catch (err) {
+        console.warn('Failed to load parallel verses for search', err);
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [results, secondaryVersionId]);
   const [shortcuts, setShortcuts] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem(SHORTCUTS_STORAGE_KEY);
@@ -248,37 +328,10 @@ export const SearchWorkspace: React.FC<SearchWorkspaceProps> = ({
             border: '1px solid var(--border-color)',
           }}
         >
-          {/* Left Group: Version & Range Dropdowns */}
+          {/* Left Group: Scope Range */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-            {versions.length > 0 && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>
-                  Version:
-                </span>
-                <select
-                  value={selectedVersionId}
-                  onChange={(e) => setSelectedVersionId(e.target.value)}
-                  style={{
-                    fontSize: '0.8rem',
-                    padding: '0.2rem 0.5rem',
-                    backgroundColor: 'var(--bg-card)',
-                    color: '#F59E0B',
-                    fontWeight: 700,
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '4px',
-                  }}
-                >
-                  {versions.map((v) => (
-                    <option key={v.id} value={v.id}>
-                      {v.abbreviation} — {v.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+              <span style={{ fontSize: '0.8rem', fontWeight: 500, color: '#94A3B8' }}>
                 Range:
               </span>
               <select
@@ -287,9 +340,9 @@ export const SearchWorkspace: React.FC<SearchWorkspaceProps> = ({
                 style={{
                   fontSize: '0.8rem',
                   padding: '0.2rem 0.5rem',
-                  backgroundColor: 'var(--bg-card)',
-                  color: '#F1F5F9',
-                  border: '1px solid var(--border-color)',
+                  backgroundColor: '#0F172A',
+                  color: '#CBD5E1',
+                  border: '1px solid #334155',
                   borderRadius: '4px',
                 }}
               >
@@ -484,9 +537,9 @@ export const SearchWorkspace: React.FC<SearchWorkspaceProps> = ({
               style={{
                 padding: '0.2rem 0.55rem',
                 fontSize: '0.75rem',
-                backgroundColor: 'rgba(56, 189, 248, 0.1)',
-                color: '#38BDF8',
-                border: '1px dashed #38BDF8',
+                backgroundColor: '#1E293B',
+                color: '#CBD5E1',
+                border: '1px dashed #475569',
                 borderRadius: '4px',
                 cursor: 'pointer',
                 display: 'inline-flex',
@@ -546,64 +599,119 @@ export const SearchWorkspace: React.FC<SearchWorkspaceProps> = ({
       {/* Results List */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '1rem' }}>
         {results.length > 0 ? (
-          results.map((r) => (
-            <div
-              key={r.verseId}
-              onClick={() => onStageResult(r)}
-              onDoubleClick={() => onTakeLiveResult(r)}
-              style={{
-                padding: '0.75rem 1rem',
-                backgroundColor: 'var(--bg-card)',
-                border: '1px solid var(--border-color)',
-                borderRadius: '6px',
-                marginBottom: '0.5rem',
-                cursor: 'pointer',
-                transition: 'background 0.15s ease',
-              }}
-            >
+          results.map((r) => {
+            const secKey = `${r.bookName}_${r.chapterNumber}_${r.verseNumber}`;
+            const secondaryText = secondaryVersionId ? secondaryVerses[secKey] : null;
+            const secVersionObj = versions.find((v) => v.id === secondaryVersionId);
+            const secAbbr = secVersionObj?.abbreviation || secondaryVersionId?.toUpperCase();
+
+            return (
               <div
+                key={r.verseId}
+                onClick={() => onStageResult(r, secondaryVersionId || undefined)}
+                onDoubleClick={() => onTakeLiveResult(r, secondaryVersionId || undefined)}
                 style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: '0.25rem',
+                  padding: '0.75rem 1rem',
+                  backgroundColor: 'var(--bg-card)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '6px',
+                  marginBottom: '0.5rem',
+                  cursor: 'pointer',
+                  transition: 'background 0.15s ease',
                 }}
               >
-                <span style={{ fontWeight: 700, color: '#F59E0B' }}>
-                  {r.bookName} {r.chapterNumber}:{r.verseNumber}{' '}
-                  <span style={{ color: 'var(--text-dim)', fontSize: '0.8rem', fontWeight: 600 }}>
-                    ({r.versionAbbr})
-                  </span>
-                </span>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button
-                    className="btn-secondary"
-                    style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onStageResult(r);
-                    }}
-                  >
-                    👁 Preview
-                  </button>
-                  <button
-                    className="btn-primary"
-                    style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onTakeLiveResult(r);
-                    }}
-                  >
-                    ⚡ Take Live
-                  </button>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '0.25rem',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ fontWeight: 600, color: '#E2E8F0', fontSize: '0.95rem' }}>
+                      {r.bookName} {r.chapterNumber}:{r.verseNumber}
+                    </span>
+                    <span
+                      style={{
+                        backgroundColor: '#334155',
+                        color: '#CBD5E1',
+                        padding: '1px 6px',
+                        borderRadius: '4px',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                      }}
+                    >
+                      {r.versionAbbr}
+                    </span>
+                    {secondaryVersionId && (
+                      <span
+                        style={{
+                          backgroundColor: '#1E293B',
+                          border: '1px solid #475569',
+                          color: '#94A3B8',
+                          padding: '1px 6px',
+                          borderRadius: '4px',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                        }}
+                      >
+                        + {secAbbr}
+                      </span>
+                    )}
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button
+                      className="btn-secondary"
+                      style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onStageResult(r, secondaryVersionId || undefined);
+                      }}
+                    >
+                      👁 Preview
+                    </button>
+                    <button
+                      className="btn-primary"
+                      style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onTakeLiveResult(r, secondaryVersionId || undefined);
+                      }}
+                    >
+                      ⚡ Take Live
+                    </button>
+                  </div>
                 </div>
+
+                <div
+                  style={{ color: '#E2E8F0', fontSize: '0.9rem', lineHeight: 1.4 }}
+                  dangerouslySetInnerHTML={{ __html: r.snippet }}
+                />
+
+                {secondaryText && (
+                  <div
+                    style={{
+                      marginTop: '0.5rem',
+                      padding: '0.4rem 0.65rem',
+                      backgroundColor: 'rgba(255, 255, 255, 0.03)',
+                      borderLeft: '3px solid #64748B',
+                      borderRadius: '4px',
+                      color: '#94A3B8',
+                      fontSize: '0.88rem',
+                      lineHeight: 1.45,
+                    }}
+                  >
+                    <span style={{ fontWeight: 600, fontSize: '0.75rem', marginRight: '6px', color: '#64748B' }}>
+                      [{secAbbr}]
+                    </span>
+                    {secondaryText}
+                  </div>
+                )}
               </div>
-              <div
-                style={{ color: '#E2E8F0', fontSize: '0.9rem', lineHeight: 1.4 }}
-                dangerouslySetInnerHTML={{ __html: r.snippet }}
-              />
-            </div>
-          ))
+            );
+          })
         ) : hasSearched && !isSearching ? (
           <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-dim)' }}>
             No matching scriptures found. Try different search terms or check spelling.

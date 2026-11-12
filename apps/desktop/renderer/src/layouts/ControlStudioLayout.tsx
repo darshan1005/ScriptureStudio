@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
+  BibleVersionDto,
   DisplayDto,
   PresentationHistoryEntryDto,
   PresentationStateDto,
@@ -30,6 +31,104 @@ export default function ControlStudioLayout(): React.JSX.Element {
   const [isReloading, setIsReloading] = useState<boolean>(false);
   const [displays, setDisplays] = useState<DisplayDto[]>([]);
   const [selectedAudienceDisplayId, setSelectedAudienceDisplayId] = useState<string>('');
+  const [versions, setVersions] = useState<BibleVersionDto[]>([]);
+  const [primaryVersionId, setPrimaryVersionId] = useState<string>(() => {
+    try {
+      return localStorage.getItem('scripture_studio_primary_version') || 'kjv';
+    } catch {
+      return 'kjv';
+    }
+  });
+  const [secondaryVersionId, setSecondaryVersionId] = useState<string>(() => {
+    try {
+      return localStorage.getItem('scripture_studio_secondary_version') || 'tel';
+    } catch {
+      return 'tel';
+    }
+  });
+
+  // Load versions
+  useEffect(() => {
+    if (window.scriptureStudioApi) {
+      window.scriptureStudioApi.bible.getVersions().then((res) => {
+        if (res.versions && res.versions.length > 0) {
+          setVersions(res.versions);
+          if (!res.versions.some((v) => v.id === primaryVersionId)) {
+            const defPrim = res.versions.find((v) => v.id === 'kjv') || res.versions[0];
+            if (defPrim) setPrimaryVersionId(defPrim.id);
+          }
+        }
+      });
+    }
+  }, [refreshCounter]);
+
+  const handlePrimaryVersionChange = (newPrim: string) => {
+    setPrimaryVersionId(newPrim);
+    try {
+      localStorage.setItem('scripture_studio_primary_version', newPrim);
+    } catch {}
+
+    if (state?.previewSlide?.reference && window.scriptureStudioApi) {
+      const ref = state.previewSlide.reference;
+      window.scriptureStudioApi.presentation.previewReference({
+        versionId: newPrim,
+        secondaryVersionId: secondaryVersionId || undefined,
+        bookId: ref.bookId,
+        bookName: ref.bookName,
+        chapterNumber: ref.chapterNumber,
+        startVerse: ref.startVerse,
+        endVerse: ref.endVerse,
+        themeId: activeTheme?.id,
+      });
+    }
+  };
+
+  const handleSecondaryVersionChange = (newSec: string) => {
+    setSecondaryVersionId(newSec);
+    try {
+      localStorage.setItem('scripture_studio_secondary_version', newSec);
+    } catch {}
+
+    if (state?.previewSlide?.reference && window.scriptureStudioApi) {
+      const ref = state.previewSlide.reference;
+      window.scriptureStudioApi.presentation.previewReference({
+        versionId: primaryVersionId,
+        secondaryVersionId: newSec || undefined,
+        bookId: ref.bookId,
+        bookName: ref.bookName,
+        chapterNumber: ref.chapterNumber,
+        startVerse: ref.startVerse,
+        endVerse: ref.endVerse,
+        themeId: activeTheme?.id,
+      });
+    }
+  };
+
+  const handleSwapTranslations = () => {
+    if (!secondaryVersionId) return;
+    const oldPrim = primaryVersionId;
+    const oldSec = secondaryVersionId;
+    setPrimaryVersionId(oldSec);
+    setSecondaryVersionId(oldPrim);
+    try {
+      localStorage.setItem('scripture_studio_primary_version', oldSec);
+      localStorage.setItem('scripture_studio_secondary_version', oldPrim);
+    } catch {}
+
+    if (state?.previewSlide?.reference && window.scriptureStudioApi) {
+      const ref = state.previewSlide.reference;
+      window.scriptureStudioApi.presentation.previewReference({
+        versionId: oldSec,
+        secondaryVersionId: oldPrim,
+        bookId: ref.bookId,
+        bookName: ref.bookName,
+        chapterNumber: ref.chapterNumber,
+        startVerse: ref.startVerse,
+        endVerse: ref.endVerse,
+        themeId: activeTheme?.id,
+      });
+    }
+  };
   const [isNavCollapsed, setIsNavCollapsed] = useState<boolean>(() => {
     try {
       return localStorage.getItem('scripture_studio_nav_collapsed') === 'true';
@@ -207,12 +306,12 @@ export default function ControlStudioLayout(): React.JSX.Element {
     bookId: string,
     chapterNumber: number,
     verseNumber: number,
-    secondaryVersionId?: string
+    secVer?: string
   ) => {
     if (window.scriptureStudioApi) {
       window.scriptureStudioApi.presentation.previewReference({
-        versionId,
-        secondaryVersionId,
+        versionId: versionId || primaryVersionId,
+        secondaryVersionId: secVer !== undefined ? (secVer || undefined) : (secondaryVersionId || undefined),
         bookId,
         chapterNumber,
         startVerse: verseNumber,
@@ -226,12 +325,12 @@ export default function ControlStudioLayout(): React.JSX.Element {
     bookId: string,
     chapterNumber: number,
     verseNumber: number,
-    secondaryVersionId?: string
+    secVer?: string
   ) => {
     if (window.scriptureStudioApi) {
       await window.scriptureStudioApi.presentation.previewReference({
-        versionId,
-        secondaryVersionId,
+        versionId: versionId || primaryVersionId,
+        secondaryVersionId: secVer !== undefined ? (secVer || undefined) : (secondaryVersionId || undefined),
         bookId,
         chapterNumber,
         startVerse: verseNumber,
@@ -243,10 +342,12 @@ export default function ControlStudioLayout(): React.JSX.Element {
     }
   };
 
-  const handleStageSearchResult = (item: SearchFullTextResultItem) => {
+  const handleStageSearchResult = (item: SearchFullTextResultItem, secVer?: string) => {
     if (window.scriptureStudioApi) {
+      const effectiveSec = secVer !== undefined ? (secVer || undefined) : (secondaryVersionId || undefined);
       window.scriptureStudioApi.presentation.previewReference({
         versionId: item.versionId,
+        secondaryVersionId: effectiveSec,
         bookId: item.bookId,
         chapterNumber: item.chapterNumber,
         startVerse: item.verseNumber,
@@ -255,10 +356,12 @@ export default function ControlStudioLayout(): React.JSX.Element {
     }
   };
 
-  const handleTakeLiveSearchResult = async (item: SearchFullTextResultItem) => {
+  const handleTakeLiveSearchResult = async (item: SearchFullTextResultItem, secVer?: string) => {
     if (window.scriptureStudioApi) {
+      const effectiveSec = secVer !== undefined ? (secVer || undefined) : (secondaryVersionId || undefined);
       await window.scriptureStudioApi.presentation.previewReference({
         versionId: item.versionId,
+        secondaryVersionId: effectiveSec,
         bookId: item.bookId,
         chapterNumber: item.chapterNumber,
         startVerse: item.verseNumber,
@@ -270,10 +373,12 @@ export default function ControlStudioLayout(): React.JSX.Element {
     }
   };
 
-  const handleStageProgramItem = (item: ProgramItemDto) => {
+  const handleStageProgramItem = (item: ProgramItemDto, secVer?: string) => {
     if (item.reference && window.scriptureStudioApi) {
+      const effectiveSec = secVer !== undefined ? (secVer || undefined) : item.reference.secondaryVersionId || (secondaryVersionId || undefined);
       window.scriptureStudioApi.presentation.previewReference({
         versionId: item.reference.versionId || 'kjv',
+        secondaryVersionId: effectiveSec,
         bookId: item.reference.bookId,
         chapterNumber: item.reference.chapterNumber,
         startVerse: item.reference.startVerse,
@@ -283,10 +388,12 @@ export default function ControlStudioLayout(): React.JSX.Element {
     }
   };
 
-  const handleTakeLiveProgramItem = async (item: ProgramItemDto) => {
+  const handleTakeLiveProgramItem = async (item: ProgramItemDto, secVer?: string) => {
     if (item.reference && window.scriptureStudioApi) {
+      const effectiveSec = secVer !== undefined ? (secVer || undefined) : item.reference.secondaryVersionId || (secondaryVersionId || undefined);
       await window.scriptureStudioApi.presentation.previewReference({
         versionId: item.reference.versionId || 'kjv',
+        secondaryVersionId: effectiveSec,
         bookId: item.reference.bookId,
         chapterNumber: item.reference.chapterNumber,
         startVerse: item.reference.startVerse,
@@ -299,11 +406,12 @@ export default function ControlStudioLayout(): React.JSX.Element {
     }
   };
 
-  const handleRecallPreview = (entry: PresentationHistoryEntryDto) => {
+  const handleRecallPreview = (entry: PresentationHistoryEntryDto, secVer?: string) => {
     if (window.scriptureStudioApi) {
+      const effectiveSec = secVer !== undefined ? (secVer || undefined) : entry.reference.secondaryVersionId || (secondaryVersionId || undefined);
       window.scriptureStudioApi.presentation.previewReference({
         versionId: entry.translationId || entry.reference.versionId || 'kjv',
-        secondaryVersionId: entry.reference.secondaryVersionId,
+        secondaryVersionId: effectiveSec,
         bookId: entry.reference.bookId,
         chapterNumber: entry.reference.chapterNumber,
         startVerse: entry.reference.startVerse,
@@ -313,11 +421,12 @@ export default function ControlStudioLayout(): React.JSX.Element {
     }
   };
 
-  const handleRecallLive = async (entry: PresentationHistoryEntryDto) => {
+  const handleRecallLive = async (entry: PresentationHistoryEntryDto, secVer?: string) => {
     if (window.scriptureStudioApi) {
+      const effectiveSec = secVer !== undefined ? (secVer || undefined) : entry.reference.secondaryVersionId || (secondaryVersionId || undefined);
       await window.scriptureStudioApi.presentation.previewReference({
         versionId: entry.translationId || entry.reference.versionId || 'kjv',
-        secondaryVersionId: entry.reference.secondaryVersionId,
+        secondaryVersionId: effectiveSec,
         bookId: entry.reference.bookId,
         chapterNumber: entry.reference.chapterNumber,
         startVerse: entry.reference.startVerse,
@@ -731,6 +840,10 @@ export default function ControlStudioLayout(): React.JSX.Element {
           <div style={{ display: activeTab === 'bible' ? 'flex' : 'none', height: '100%', flexDirection: 'column' }}>
             <BibleReaderWorkspace
               refreshKey={refreshCounter}
+              primaryVersionId={primaryVersionId}
+              onPrimaryVersionChange={handlePrimaryVersionChange}
+              secondaryVersionId={secondaryVersionId}
+              onSecondaryVersionChange={handleSecondaryVersionChange}
               onSelectVerse={handleSelectVerse}
               onDoubleSelectVerse={handleDoubleSelectVerse}
               activeReference={state?.liveSlide?.reference || state?.previewSlide?.reference}
@@ -746,6 +859,10 @@ export default function ControlStudioLayout(): React.JSX.Element {
 
           <div style={{ display: activeTab === 'search' ? 'flex' : 'none', height: '100%', flexDirection: 'column' }}>
             <SearchWorkspace
+              primaryVersionId={primaryVersionId}
+              onPrimaryVersionChange={handlePrimaryVersionChange}
+              secondaryVersionId={secondaryVersionId}
+              onSecondaryVersionChange={handleSecondaryVersionChange}
               onStageResult={handleStageSearchResult}
               onTakeLiveResult={handleTakeLiveSearchResult}
             />
@@ -753,6 +870,10 @@ export default function ControlStudioLayout(): React.JSX.Element {
 
           <div style={{ display: activeTab === 'programs' ? 'flex' : 'none', height: '100%', flexDirection: 'column' }}>
             <ProgramEditorWorkspace
+              primaryVersionId={primaryVersionId}
+              onPrimaryVersionChange={handlePrimaryVersionChange}
+              secondaryVersionId={secondaryVersionId}
+              onSecondaryVersionChange={handleSecondaryVersionChange}
               onStageItem={handleStageProgramItem}
               onTakeLiveItem={handleTakeLiveProgramItem}
             />
@@ -768,6 +889,8 @@ export default function ControlStudioLayout(): React.JSX.Element {
 
           <div style={{ display: activeTab === 'history' ? 'flex' : 'none', height: '100%', flexDirection: 'column' }}>
             <HistoryWorkspace
+              secondaryVersionId={secondaryVersionId}
+              onSecondaryVersionChange={handleSecondaryVersionChange}
               onRecallLive={handleRecallLive}
               onRecallPreview={handleRecallPreview}
               lastUpdatedTimestamp={state?.lastUpdatedTimestamp}
@@ -789,6 +912,12 @@ export default function ControlStudioLayout(): React.JSX.Element {
           <PreviewPane
             state={state}
             activeTheme={activeTheme}
+            versions={versions}
+            primaryVersionId={primaryVersionId}
+            secondaryVersionId={secondaryVersionId}
+            onPrimaryVersionChange={handlePrimaryVersionChange}
+            onSecondaryVersionChange={handleSecondaryVersionChange}
+            onSwapTranslations={handleSwapTranslations}
             onTakeLive={handleTakeLive}
             onNextVerse={handleNextVerse}
             onPrevVerse={handlePrevVerse}
