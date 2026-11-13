@@ -56,6 +56,11 @@ const api: ScriptureStudioApi = {
     setTheme: (themeId: string) => ipcRenderer.invoke('presentation:set-theme', themeId),
     next: () => ipcRenderer.invoke('presentation:next'),
     prev: () => ipcRenderer.invoke('presentation:prev'),
+    capturePreview: (options?: { width?: number; height?: number } | { x?: number; y?: number; width?: number; height?: number }) =>
+      ipcRenderer.invoke('presentation:capture-preview', options),
+    savePreviewImage: (req: { dataUrl: string; defaultFilename?: string }) =>
+      ipcRenderer.invoke('presentation:save-preview-image', req),
+    showItemInFolder: (filePath: string) => ipcRenderer.invoke('presentation:show-in-folder', filePath),
     onStateChanged: (callback: (state: PresentationStateDto) => void) => {
       const listener = (_event: Electron.IpcRendererEvent, state: PresentationStateDto) => {
         callback(state);

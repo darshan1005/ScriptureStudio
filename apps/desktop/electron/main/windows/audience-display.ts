@@ -1,6 +1,6 @@
 import { BrowserWindow, Display, app, screen } from 'electron';
 import path from 'path';
-import { getControlStudioWindow } from './control-studio.js';
+import { getControlStudioWindow, getAppIconPath } from './control-studio.js';
 
 let audienceDisplayWindow: BrowserWindow | null = null;
 
@@ -33,6 +33,7 @@ export function createAudienceDisplayWindow(targetDisplay: Display): BrowserWind
       title: 'Scripture Studio — Audience Output (Projector Preview Window)',
       width: Math.min(1152, Math.round(targetDisplay.bounds.width * 0.75)),
       height: Math.min(648, Math.round(targetDisplay.bounds.height * 0.75)),
+      icon: getAppIconPath(),
       frame: true,
       resizable: true,
       backgroundColor: '#000000',
@@ -56,6 +57,7 @@ export function createAudienceDisplayWindow(targetDisplay: Display): BrowserWind
       y,
       width,
       height,
+      icon: getAppIconPath(),
       frame: false,
       transparent: false,
       backgroundColor: '#000000',

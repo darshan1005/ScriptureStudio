@@ -29,9 +29,12 @@ export interface ThemeTypography {
   // Version / Translation Tag Styling
   showVersion?: boolean;          // Whether to display the Bible translation/version tag (default true)
   versionFontSizeRem?: number;    // e.g. 1.1rem (range 0.6 - 2.5)
-  versionColor?: string;          // Hex or RGBA, e.g. '#94A3B8'
-  versionWeight?: number;         // e.g. 600
-  versionStyle?: FontStyleMode;   // 'normal' | 'italic' | 'oblique'
+  versionColor?: string;          // Primary Translation Tag Color, e.g. '#94A3B8'
+  secondaryVersionColor?: string; // Secondary Translation Tag Color, e.g. '#F59E0B'
+  versionWeight?: number;         // Primary Version Weight, e.g. 600
+  secondaryVersionWeight?: number;// Secondary Version Weight, e.g. 600
+  versionStyle?: FontStyleMode;   // Primary Version Style ('normal' | 'italic')
+  secondaryVersionStyle?: FontStyleMode; // Secondary Version Style ('normal' | 'italic')
   versionBadgeFormat?: 'parentheses' | 'pill' | 'plain' | 'brackets';
 
   // Footnotes & Translator HTML Tags Control

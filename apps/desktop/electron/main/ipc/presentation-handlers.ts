@@ -1,4 +1,6 @@
-import { ipcMain, BrowserWindow } from 'electron';
+import { ipcMain, BrowserWindow, app, dialog, shell } from 'electron';
+import fs from 'fs';
+import path from 'path';
 import {
   PresentationActionResponse,
   PresentationStateDto,
@@ -16,6 +18,17 @@ import { getStageDisplayWindow } from '../windows/stage-display.js';
 import { openOutputWindows } from './display-handlers.js';
 
 const logger = createLogger('PresentationController');
+
+function cleanVerseText(text: string): string {
+  if (!text) return '';
+  return text
+    .replace(/<sup\b[^>]*>[\s\S]*?<\/sup>/gi, '')
+    .replace(/<f\b[^>]*>[\s\S]*?<\/f>/gi, '')
+    .replace(/<note\b[^>]*>[\s\S]*?<\/note>/gi, '')
+    .replace(/<[^>]+>/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
 export class PresentationController {
   private state: PresentationStateDto;
@@ -124,12 +137,12 @@ export class PresentationController {
                 {
                   versionAbbreviation: abbr,
                   versionName: version?.name || abbr,
-                  text: verses.map((v) => (verses.length > 1 ? `(${v.verseNumber}) ` : '') + v.verseText).join(' '),
+                  text: verses.map((v) => (verses.length > 1 ? `(${v.verseNumber}) ` : '') + cleanVerseText(v.verseText)).join(' '),
                 },
                 {
                   versionAbbreviation: secAbbr,
                   versionName: secVersion?.name || secAbbr,
-                  text: secVerses.map((v) => (secVerses.length > 1 ? `(${v.verseNumber}) ` : '') + v.verseText).join(' '),
+                  text: secVerses.map((v) => (secVerses.length > 1 ? `(${v.verseNumber}) ` : '') + cleanVerseText(v.verseText)).join(' '),
                 },
               ];
             }
@@ -153,7 +166,7 @@ export class PresentationController {
         id: `slide_${Date.now()}`,
         referenceDisplay: refDisplay,
         versionAbbreviation: displayAbbr,
-        verses: verses.map((v) => ({ verseNumber: v.verseNumber, text: v.verseText })),
+        verses: verses.map((v) => ({ verseNumber: v.verseNumber, text: cleanVerseText(v.verseText) })),
         multiVersionSlots,
         reference: scriptureRef,
       };
@@ -469,5 +482,150 @@ export function registerPresentationIpcHandlers(controller: PresentationControll
   ipcMain.handle('presentation:set-theme', (_e, themeId: string) => controller.setTheme(themeId));
   ipcMain.handle('presentation:next', () => controller.next());
   ipcMain.handle('presentation:prev', () => controller.prev());
+
+  ipcMain.handle(
+    'presentation:capture-preview',
+    async (event, options?: { width?: number; height?: number }) => {
+      const targetWidth = options?.width || 1920;
+      const targetHeight = options?.height || 1080;
+
+      let captureWin: BrowserWindow | null = null;
+      try {
+        captureWin = new BrowserWindow({
+          width: targetWidth,
+          height: targetHeight,
+          useContentSize: true,
+          show: false,
+          frame: false,
+          enableLargerThanScreen: true,
+          backgroundColor: '#000000',
+          webPreferences: {
+            contextIsolation: true,
+            nodeIntegration: false,
+            sandbox: true,
+            webSecurity: true,
+            preload: path.join(__dirname, '../preload/index.js'),
+          },
+        });
+
+        captureWin.setContentSize(targetWidth, targetHeight);
+
+        const isDev = !app.isPackaged;
+        if (isDev && process.env['VITE_DEV_SERVER_URL']) {
+          await captureWin.loadURL(`${process.env['VITE_DEV_SERVER_URL']}?view=audience&capture=1`);
+        } else {
+          await captureWin.loadFile(path.join(__dirname, '../../dist/index.html'), {
+            query: { view: 'audience', capture: '1' },
+          });
+        }
+
+        // Wait until fonts, layout, and background images are ready
+        await new Promise<void>((resolve) => {
+          let elapsed = 0;
+          const interval = setInterval(async () => {
+            elapsed += 40;
+            if (!captureWin || captureWin.isDestroyed()) {
+              clearInterval(interval);
+              resolve();
+              return;
+            }
+            try {
+              const isReady = await captureWin.webContents.executeJavaScript('Boolean(window.__CAPTURE_READY__)');
+              if (isReady || elapsed >= 2000) {
+                clearInterval(interval);
+                resolve();
+              }
+            } catch {
+              if (elapsed >= 2000) {
+                clearInterval(interval);
+                resolve();
+              }
+            }
+          }, 40);
+        });
+
+        // Small wait to ensure GPU composite frame is flushed
+        await new Promise((r) => setTimeout(r, 60));
+
+        const image = await captureWin.webContents.capturePage();
+        const dataUrl = image.toDataURL();
+
+        try {
+          captureWin.destroy();
+          captureWin = null;
+        } catch {}
+
+        return {
+          success: true,
+          dataUrl,
+        };
+      } catch (err) {
+        logger.error('Failed to capture high-definition preview:', err);
+        if (captureWin && !captureWin.isDestroyed()) {
+          try {
+            captureWin.destroy();
+          } catch {}
+        }
+        // Fallback to active sender window capture if offscreen fails
+        try {
+          const win = BrowserWindow.fromWebContents(event.sender);
+          if (win && !win.isDestroyed()) {
+            const fallbackImg = await win.webContents.capturePage();
+            return { success: true, dataUrl: fallbackImg.toDataURL() };
+          }
+        } catch {}
+        return { success: false, error: String(err) };
+      }
+    }
+  );
+
+  ipcMain.handle(
+    'presentation:save-preview-image',
+    async (event, req: { dataUrl: string; defaultFilename?: string }) => {
+      const win = BrowserWindow.fromWebContents(event.sender);
+      try {
+        const defaultName = req.defaultFilename || `ScriptureStudio_${Date.now()}.png`;
+        let initialDir = '';
+        try {
+          initialDir = app.getPath('pictures');
+        } catch {
+          initialDir = app.getPath('downloads');
+        }
+
+        const saveOptions = {
+          title: 'Save Scripture Preview Image (Full HD 1920x1080)',
+          defaultPath: path.join(initialDir, defaultName),
+          filters: [
+            { name: 'PNG Image (*.png)', extensions: ['png'] },
+            { name: 'JPEG Image (*.jpg)', extensions: ['jpg'] },
+          ],
+        };
+
+        const { canceled, filePath } = win && !win.isDestroyed()
+          ? await dialog.showSaveDialog(win, saveOptions)
+          : await dialog.showSaveDialog(saveOptions);
+
+        if (canceled || !filePath) {
+          return { success: false, canceled: true };
+        }
+
+        const base64Data = req.dataUrl.replace(/^data:image\/\w+;base64,/, '');
+        const buffer = Buffer.from(base64Data, 'base64');
+        fs.writeFileSync(filePath, buffer);
+        logger.info(`Preview image saved successfully to ${filePath}`);
+
+        return { success: true, filePath, filename: path.basename(filePath) };
+      } catch (err) {
+        logger.error('Failed to save preview image:', err);
+        return { success: false, error: String(err) };
+      }
+    }
+  );
+
+  ipcMain.handle('presentation:show-in-folder', (_e, filePath: string) => {
+    if (filePath && fs.existsSync(filePath)) {
+      shell.showItemInFolder(filePath);
+    }
+  });
 }
 

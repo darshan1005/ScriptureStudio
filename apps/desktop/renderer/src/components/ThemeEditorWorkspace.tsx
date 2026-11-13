@@ -1,9 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import { ThemeDto } from '@scripture-studio/shared-types';
+import { BibleVersionDto, ThemeDto } from '@scripture-studio/shared-types';
 import { MaterialIcon } from './MaterialIcon.js';
+
+function cleanScriptureText(text: string): string {
+  if (!text) return '';
+  return text
+    .replace(/<sup\b[^>]*>[\s\S]*?<\/sup>/gi, '')
+    .replace(/<f\b[^>]*>[\s\S]*?<\/f>/gi, '')
+    .replace(/<note\b[^>]*>[\s\S]*?<\/note>/gi, '')
+    .replace(/<[^>]+>/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
 interface ThemeEditorWorkspaceProps {
   onThemeUpdated: (theme: ThemeDto) => void;
+  primaryVersionId?: string;
+  secondaryVersionId?: string;
+  versions?: BibleVersionDto[];
 }
 
 const PRESET_GRADIENTS = [
@@ -43,11 +57,93 @@ const WORSHIP_BG_PRESETS = [
   },
 ];
 
-export const ThemeEditorWorkspace: React.FC<ThemeEditorWorkspaceProps> = ({ onThemeUpdated }) => {
+export const ThemeEditorWorkspace: React.FC<ThemeEditorWorkspaceProps> = ({
+  onThemeUpdated,
+  primaryVersionId = 'kjv',
+  secondaryVersionId,
+  versions = [],
+}) => {
   const [themes, setThemes] = useState<ThemeDto[]>([]);
   const [selectedTheme, setSelectedTheme] = useState<ThemeDto | null>(null);
   const [activeTab, setActiveTab] = useState<'typography' | 'background' | 'effects' | 'layout'>('typography');
   const [typoSubTab, setTypoSubTab] = useState<'verse' | 'reference' | 'version'>('verse');
+
+  // Dual translation preview toggle state
+  const [isDualPreview, setIsDualPreview] = useState<boolean>(() => !!secondaryVersionId);
+
+  useEffect(() => {
+    if (secondaryVersionId) {
+      setIsDualPreview(true);
+    }
+  }, [secondaryVersionId]);
+
+  const [primaryText, setPrimaryText] = useState<string>(
+    'For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life.'
+  );
+  const [secondaryText, setSecondaryText] = useState<string>(
+    'దేవుడు లోకమును ఎంతో ప్రేమించెను. కాగా ఆయన తన అద్వితీయకుమారునిగా పుట్టిన వానియందు విశ్వాసముంచు ప్రతివాడును నశింపక నిత్యజీవము పొందునట్లు ఆయనను అనుగ్రహించెను.'
+  );
+
+
+  useEffect(() => {
+    if (window.scriptureStudioApi?.bible?.getVerseRange) {
+      const primId = primaryVersionId || 'kjv';
+      window.scriptureStudioApi.bible
+        .getVerseRange({
+          versionId: primId,
+          bookId: 'JHN',
+          chapterNumber: 3,
+          startVerse: 16,
+          endVerse: 16,
+        })
+        .then((res) => {
+          if (res?.verses && res.verses.length > 0 && res.verses[0]?.verseText) {
+            setPrimaryText(cleanScriptureText(res.verses[0].verseText));
+          }
+        })
+        .catch(() => { });
+
+      if (secondaryVersionId) {
+        window.scriptureStudioApi.bible
+          .getVerseRange({
+            versionId: secondaryVersionId,
+            bookId: 'JHN',
+            chapterNumber: 3,
+            startVerse: 16,
+            endVerse: 16,
+          })
+          .then((res) => {
+            if (res?.verses && res.verses.length > 0 && res.verses[0]?.verseText) {
+              setSecondaryText(cleanScriptureText(res.verses[0].verseText));
+            } else if (secondaryVersionId === 'tel') {
+              setSecondaryText(
+                'దేవుడు లోకమును ఎంతో ప్రేమించెను. కాగా ఆయన తన అద్వితీయకుమారునిగా పుట్టిన వానియందు విశ్వాసముంచు ప్రతివాడును నశింపక నిత్యజీవము పొందునట్లు ఆయనను అనుగ్రహించెను.'
+              );
+            }
+          })
+          .catch(() => {
+            if (secondaryVersionId === 'tel') {
+              setSecondaryText(
+                'దేవుడు లోకమును ఎంతో ప్రేమించెను. కాగా ఆయన తన అద్వితీయకుమారునిగా పుట్టిన వానియందు విశ్వాసముంచు ప్రతివాడును నశింపక నిత్యజీవము పొందునట్లు ఆయనను అనుగ్రహించెను.'
+              );
+            }
+          });
+      }
+    }
+  }, [primaryVersionId, secondaryVersionId]);
+
+  const primaryVersionObj = versions.find((v) => v.id === (primaryVersionId || 'kjv'));
+  const primaryAbbr =
+    primaryVersionObj?.abbreviation || (primaryVersionId || 'kjv').toUpperCase();
+  const primaryVersionName = primaryVersionObj?.name || (primaryAbbr === 'KJV' ? 'King James Version' : primaryAbbr);
+
+  const secondaryVersionObj = secondaryVersionId
+    ? versions.find((v) => v.id === secondaryVersionId)
+    : versions.find((v) => v.id === 'tel');
+  const secondaryAbbr =
+    secondaryVersionObj?.abbreviation || (secondaryVersionId ? secondaryVersionId.toUpperCase() : 'TEL');
+  const secondaryVersionName =
+    secondaryVersionObj?.name || (secondaryAbbr === 'TEL' ? 'Telugu Bible (పరిశుద్ధ గ్రంథము)' : secondaryAbbr);
 
   const loadThemes = () => {
     if (window.scriptureStudioApi) {
@@ -153,21 +249,26 @@ export const ThemeEditorWorkspace: React.FC<ThemeEditorWorkspaceProps> = ({ onTh
     setSelectedTheme(newTheme);
   };
 
-  // Helper to compile live background CSS for preview
-  const getPreviewBackground = (t: ThemeDto): string => {
+  // Helper to compile live background CSS for preview (matches AudienceDisplayLayout exactly)
+  const getPreviewBackground = (t: ThemeDto): React.CSSProperties => {
     const bg = t.config.background;
     if (bg.type === 'gradient' && bg.gradient?.stops) {
       const stops = bg.gradient.stops.map((s) => `${s.color} ${s.offset}%`).join(', ');
-      return `linear-gradient(${bg.gradient.directionDeg || 135}deg, ${stops})`;
+      return { background: `linear-gradient(${bg.gradient.directionDeg || 135}deg, ${stops})` };
     }
     if (bg.type === 'solid') {
-      return bg.color || '#000000';
+      return { backgroundColor: bg.color || '#000000' };
     }
     if (bg.type === 'image' && bg.imageUrl) {
       const dimming = (bg.dimmingPercent ?? 45) / 100;
-      return `linear-gradient(rgba(0,0,0,${dimming}), rgba(0,0,0,${dimming})), url("${bg.imageUrl}") center / ${bg.objectFit || 'cover'} no-repeat`;
+      return {
+        backgroundImage: `linear-gradient(rgba(0,0,0,${dimming}), rgba(0,0,0,${dimming})), url("${bg.imageUrl}")`,
+        backgroundSize: bg.objectFit || 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      };
     }
-    return 'transparent';
+    return { backgroundColor: '#09172C' };
   };
 
   return (
@@ -227,7 +328,7 @@ export const ThemeEditorWorkspace: React.FC<ThemeEditorWorkspaceProps> = ({ onTh
                     width: '32px',
                     height: '24px',
                     borderRadius: '4px',
-                    background: bgStyle,
+                    ...bgStyle,
                     border: '1px solid var(--border-color)',
                     flexShrink: 0,
                   }}
@@ -329,221 +430,290 @@ export const ThemeEditorWorkspace: React.FC<ThemeEditorWorkspaceProps> = ({ onTh
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
+                      flexWrap: 'wrap',
+                      gap: '0.5rem',
                     }}
                   >
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
                       <MaterialIcon name="live_tv" size={16} />
                       <span>Live Theme Screen Preview</span>
                     </span>
-                    <span>16:9 High-Definition</span>
+
+                    {/* Mode Toggle: Single vs Dual Translation Preview */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <button
+                        type="button"
+                        onClick={() => setIsDualPreview(!isDualPreview)}
+                        style={{
+                          fontSize: '0.74rem',
+                          padding: '2px 8px',
+                          backgroundColor: isDualPreview ? '#1E293B' : 'rgba(255, 255, 255, 0.05)',
+                          color: isDualPreview ? '#E2E8F0' : '#94A3B8',
+                          border: isDualPreview ? '1px solid #475569' : '1px solid #334155',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.3rem',
+                          fontWeight: isDualPreview ? 600 : 500,
+                          transition: 'all 0.15s ease',
+                        }}
+                        title="Toggle single vs dual translation in theme preview"
+                      >
+                        <MaterialIcon name="translate" size={14} color={isDualPreview ? '#38BDF8' : '#94A3B8'} />
+                        <span>{isDualPreview ? `Dual: ${primaryAbbr} + ${secondaryAbbr}` : `Single: ${primaryAbbr}`}</span>
+                      </button>
+
+                      <span style={{ fontSize: '0.72rem', color: '#64748B' }}>16:9 HD</span>
+                    </div>
                   </div>
 
-                  {/* 16:9 Aspect Ratio Frame */}
-                  <div
-                    style={{
-                      width: '100%',
-                      paddingTop: '56.25%',
-                      position: 'relative',
-                      borderRadius: '8px',
-                      overflow: 'hidden',
-                      boxShadow: '0 12px 36px rgba(0,0,0,0.8)',
-                      border: '1px solid var(--border-color)',
-                      background: getPreviewBackground(selectedTheme),
-                    }}
-                  >
-                    <div
-                      style={{
-                        position: 'absolute',
-                        inset: 0,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent:
-                          selectedTheme.config.placement.verticalAlign === 'top'
-                            ? 'flex-start'
-                            : selectedTheme.config.placement.verticalAlign === 'bottom'
-                            ? 'flex-end'
-                            : 'center',
-                        alignItems:
-                          selectedTheme.config.typography.alignment === 'left'
-                            ? 'flex-start'
-                            : selectedTheme.config.typography.alignment === 'right'
-                            ? 'flex-end'
-                            : selectedTheme.config.typography.alignment === 'justify'
-                            ? 'stretch'
-                            : 'center',
-                        padding: `${selectedTheme.config.margins.topPercent}% ${selectedTheme.config.margins.rightPercent}% ${selectedTheme.config.margins.bottomPercent}% ${selectedTheme.config.margins.leftPercent}%`,
-                        boxSizing: 'border-box',
-                      }}
-                    >
-                      {/* Inner Box with Width, Height, and Padding controls */}
+                  {/* 16:9 Scaled Preview Canvas - 100% Fully Occupied Edge-to-Edge (Matches Preview Monitor 1:1) */}
+                  {(() => {
+                    // Dynamic compact sizing for 16:9 monitor (matches Preview Monitor 1:1)
+                    const totalLength = isDualPreview
+                      ? primaryText.length + secondaryText.length
+                      : primaryText.length;
+                    const userBaseRem = selectedTheme.config.typography.fontSizeRem ?? 3.5;
+                    const fontMultiplier = Math.max(0.65, Math.min(1.4, userBaseRem / 3.5));
+
+                    const previewFontSize = `${(totalLength > 300 ? 0.78 : totalLength > 180 ? 0.84 : 0.92) * fontMultiplier}rem`;
+                    const previewPadding = totalLength > 250 ? '0.22rem 0.55rem' : '0.35rem 0.65rem';
+                    const previewGap = totalLength > 250 ? '0.28rem' : '0.45rem';
+                    const singleFontSize = `${(primaryText.length > 250 ? 0.95 : 1.1) * fontMultiplier}rem`;
+
+                    const refPosition = selectedTheme.config.typography.referencePosition || 'above';
+                    const refMultiplier = (selectedTheme.config.typography.referenceFontSizeRem ?? 1.4) / 1.4;
+                    const refFontSize = `${(totalLength > 250 ? 0.95 : 1.15) * refMultiplier}rem`;
+                    const refFontFamily =
+                      selectedTheme.config.typography.referenceFontFamily ||
+                      selectedTheme.config.typography.fontFamily ||
+                      'Segoe UI, Arial, sans-serif';
+                    const refColor = selectedTheme.config.typography.referenceColor || '#F59E0B';
+                    const refWeight = selectedTheme.config.typography.referenceWeight ?? 700;
+                    const refStyle = selectedTheme.config.typography.referenceStyle || 'normal';
+                    const refDec = selectedTheme.config.typography.referenceDecoration || 'none';
+
+                    const showVersion = selectedTheme.config.typography.showVersion !== false;
+                    const primaryVersionColor = selectedTheme.config.typography.versionColor || '#94A3B8';
+                    const secondaryVersionColor = selectedTheme.config.typography.secondaryVersionColor || '#F59E0B';
+                    const versionMultiplier = (selectedTheme.config.typography.versionFontSizeRem ?? 1.1) / 1.1;
+                    const primaryVersionWeight = selectedTheme.config.typography.versionWeight ?? 600;
+                    const secondaryVersionWeight = selectedTheme.config.typography.secondaryVersionWeight ?? primaryVersionWeight;
+                    const primaryVersionStyle = selectedTheme.config.typography.versionStyle || 'normal';
+                    const secondaryVersionStyle = selectedTheme.config.typography.secondaryVersionStyle || primaryVersionStyle;
+                    const slotVersionFontSize = `${0.65 * versionMultiplier}rem`;
+
+                    const shadows: string[] = [];
+                    if (selectedTheme.config.shadow.enabled) {
+                      shadows.push(
+                        `${selectedTheme.config.shadow.offsetX}px ${selectedTheme.config.shadow.offsetY}px ${selectedTheme.config.shadow.blurPx}px ${selectedTheme.config.shadow.color}`
+                      );
+                    }
+                    if (selectedTheme.config.glow?.enabled) {
+                      shadows.push(`0 0 ${selectedTheme.config.glow.radiusPx}px ${selectedTheme.config.glow.color}`);
+                    }
+                    const textShadowVal = shadows.length > 0 ? shadows.join(', ') : '0 2px 6px rgba(0,0,0,0.85)';
+                    const strokeVal = selectedTheme.config.outline.enabled
+                      ? `${selectedTheme.config.outline.widthPx}px ${selectedTheme.config.outline.color}`
+                      : undefined;
+                    const fontStyleVal = selectedTheme.config.typography.fontStyle || 'normal';
+                    const textDecVal = selectedTheme.config.typography.textDecoration || 'none';
+                    const letterSpacingVal = `${selectedTheme.config.typography.letterSpacingPx ?? 0.5}px`;
+                    const textTransformVal = (selectedTheme.config.typography.transform as any) || 'none';
+
+                    const renderReferenceTitle = () => {
+                      if (refPosition === 'hidden') return null;
+                      return (
+                        <div
+                          style={{
+                            fontSize: refFontSize,
+                            fontWeight: refWeight,
+                            color: refColor,
+                            fontStyle: refStyle,
+                            textDecoration: refDec,
+                            fontFamily: refFontFamily,
+                            marginBottom: refPosition === 'below' ? 0 : '1.5cqh',
+                            marginTop: refPosition === 'below' ? '1.5cqh' : 0,
+                            letterSpacing: '0.04em',
+                            textShadow: textShadowVal,
+                            textAlign: (selectedTheme.config.typography.alignment as any) || 'center',
+                            flexShrink: 0,
+                          }}
+                        >
+                          <span>John 3:16</span>
+                        </div>
+                      );
+                    };
+
+                    return (
                       <div
                         style={{
-                          width: `${selectedTheme.config.margins.containerMaxWidthPercent ?? 92}%`,
-                          maxHeight: `${selectedTheme.config.margins.containerMaxHeightPercent ?? 88}%`,
-                          padding: `${selectedTheme.config.margins.paddingPercent ?? 3}%`,
-                          boxSizing: 'border-box',
+                          aspectRatio: '16/9',
+                          width: '100%',
+                          borderRadius: '8px',
+                          overflow: 'hidden',
+                          border: '2px solid var(--border-color)',
+                          boxShadow: '0 12px 36px rgba(0,0,0,0.8)',
                           display: 'flex',
                           flexDirection: 'column',
-                          textAlign: selectedTheme.config.typography.alignment,
                           justifyContent:
                             selectedTheme.config.placement.verticalAlign === 'top'
                               ? 'flex-start'
                               : selectedTheme.config.placement.verticalAlign === 'bottom'
-                              ? 'flex-end'
-                              : 'center',
-                          overflow: 'hidden',
+                                ? 'flex-end'
+                                : 'center',
+                          alignItems: 'center',
+                          padding: `${selectedTheme.config.margins.topPercent ?? 4}% ${selectedTheme.config.margins.rightPercent ?? 6}% ${selectedTheme.config.margins.bottomPercent ?? 4}% ${selectedTheme.config.margins.leftPercent ?? 6}%`,
+                          textAlign: (selectedTheme.config.typography.alignment as any) || 'center',
+                          position: 'relative',
+                          boxSizing: 'border-box',
+                          ...getPreviewBackground(selectedTheme),
                         }}
                       >
-                        {/* Reference Title (if Above) */}
-                        {selectedTheme.config.typography.referencePosition !== 'hidden' &&
-                          selectedTheme.config.typography.referencePosition !== 'below' && (
-                            <div
-                              style={{
-                                fontFamily:
-                                  selectedTheme.config.typography.referenceFontFamily ||
-                                  selectedTheme.config.typography.fontFamily,
-                                color: selectedTheme.config.typography.referenceColor || '#F59E0B',
-                                fontWeight: selectedTheme.config.typography.referenceWeight ?? 700,
-                                fontSize: `${(selectedTheme.config.typography.referenceFontSizeRem ?? 1.4) * 0.9}rem`,
-                                fontStyle: selectedTheme.config.typography.referenceStyle || 'normal',
-                                textDecoration: selectedTheme.config.typography.referenceDecoration || 'none',
-                                marginBottom: '0.4rem',
-                                letterSpacing: `${(selectedTheme.config.typography.letterSpacingPx ?? 0.5) * 0.5}px`,
-                                textShadow: (() => {
-                                  const sh: string[] = [];
-                                  if (selectedTheme.config.shadow.enabled) {
-                                    sh.push(`${selectedTheme.config.shadow.offsetX}px ${selectedTheme.config.shadow.offsetY}px ${selectedTheme.config.shadow.blurPx}px ${selectedTheme.config.shadow.color}`);
-                                  }
-                                  if (selectedTheme.config.glow?.enabled) {
-                                    sh.push(`0 0 ${selectedTheme.config.glow.radiusPx}px ${selectedTheme.config.glow.color}`);
-                                  }
-                                  return sh.length > 0 ? sh.join(', ') : 'none';
-                                })(),
-                              }}
-                            >
-                              <span>John 3:16</span>
-                              {selectedTheme.config.typography.showVersion !== false && (
-                                <span
+                        <div
+                          style={{
+                            maxWidth: `${selectedTheme.config.margins.containerMaxWidthPercent ?? 94}%`,
+                            width: '100%',
+                            padding: `${selectedTheme.config.margins.paddingPercent ?? 2}%`,
+                            boxSizing: 'border-box',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent:
+                              selectedTheme.config.placement.verticalAlign === 'top'
+                                ? 'flex-start'
+                                : selectedTheme.config.placement.verticalAlign === 'bottom'
+                                  ? 'flex-end'
+                                  : 'center',
+                          }}
+                        >
+                          {/* Reference Title if Above */}
+                          {refPosition !== 'below' && renderReferenceTitle()}
+
+                          {/* Scripture Content (Dual Translation or Single Version) */}
+                          {isDualPreview ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: previewGap, width: '100%' }}>
+                              {/* Primary Translation Card */}
+                              <div
+                                style={{
+                                  padding: previewPadding,
+                                  borderRadius: '5px',
+                                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                                  textAlign: (selectedTheme.config.typography.alignment as any) || 'center',
+                                  boxSizing: 'border-box',
+                                }}
+                              >
+                                {showVersion && (
+                                  <div
+                                    style={{
+                                      fontSize: slotVersionFontSize,
+                                      fontWeight: primaryVersionWeight,
+                                      color: primaryVersionColor,
+                                      fontStyle: primaryVersionStyle,
+                                      marginBottom: '1px',
+                                      letterSpacing: '0.04em',
+                                      textTransform: 'uppercase',
+                                    }}
+                                  >
+                                    {primaryVersionName}
+                                  </div>
+                                )}
+                                <div
                                   style={{
-                                    marginLeft: '0.45rem',
-                                    fontSize: `${(selectedTheme.config.typography.versionFontSizeRem ?? 1.1) * 0.72}rem`,
-                                    color: selectedTheme.config.typography.versionColor || '#94A3B8',
-                                    fontWeight: selectedTheme.config.typography.versionWeight ?? 600,
-                                    fontStyle: selectedTheme.config.typography.versionStyle || 'normal',
-                                    display: 'inline-block',
-                                    verticalAlign: 'middle',
-                                    ...(selectedTheme.config.typography.versionBadgeFormat === 'pill'
-                                      ? {
-                                          backgroundColor: 'rgba(255, 255, 255, 0.16)',
-                                          padding: '1px 8px',
-                                          borderRadius: '999px',
-                                          border: '1px solid rgba(255, 255, 255, 0.25)',
-                                        }
-                                      : {}),
+                                    fontSize: previewFontSize,
+                                    lineHeight: selectedTheme.config.typography.lineHeight || 1.35,
+                                    color: selectedTheme.config.typography.color || '#FFFFFF',
+                                    fontFamily: selectedTheme.config.typography.fontFamily || 'Segoe UI, Arial, sans-serif',
+                                    fontWeight: selectedTheme.config.typography.fontWeight || 600,
+                                    fontStyle: fontStyleVal,
+                                    textDecoration: textDecVal,
+                                    letterSpacing: letterSpacingVal,
+                                    textTransform: textTransformVal,
+                                    textShadow: textShadowVal,
+                                    WebkitTextStroke: strokeVal,
+                                    wordBreak: 'break-word',
                                   }}
                                 >
-                                  {selectedTheme.config.typography.versionBadgeFormat === 'brackets'
-                                    ? '[KJV]'
-                                    : selectedTheme.config.typography.versionBadgeFormat === 'plain' ||
-                                      selectedTheme.config.typography.versionBadgeFormat === 'pill'
-                                    ? 'KJV'
-                                    : '(KJV)'}
-                                </span>
-                              )}
+                                  {cleanScriptureText(primaryText)}
+                                </div>
+                              </div>
+
+                              {/* Secondary Translation Card */}
+                              <div
+                                style={{
+                                  padding: previewPadding,
+                                  borderRadius: '5px',
+                                  backgroundColor: 'rgba(245, 158, 11, 0.08)',
+                                  border: '1px solid rgba(245, 158, 11, 0.28)',
+                                  textAlign: (selectedTheme.config.typography.alignment as any) || 'center',
+                                  boxSizing: 'border-box',
+                                }}
+                              >
+                                {showVersion && (
+                                  <div
+                                    style={{
+                                      fontSize: slotVersionFontSize,
+                                      fontWeight: secondaryVersionWeight,
+                                      color: secondaryVersionColor,
+                                      fontStyle: secondaryVersionStyle,
+                                      marginBottom: '1px',
+                                      letterSpacing: '0.04em',
+                                      textTransform: 'uppercase',
+                                    }}
+                                  >
+                                    {secondaryVersionName}
+                                  </div>
+                                )}
+                                <div
+                                  style={{
+                                    fontSize: previewFontSize,
+                                    lineHeight: selectedTheme.config.typography.lineHeight || 1.35,
+                                    color: selectedTheme.config.typography.color || '#FFFFFF',
+                                    fontFamily: selectedTheme.config.typography.fontFamily || 'Segoe UI, Arial, sans-serif',
+                                    fontWeight: selectedTheme.config.typography.fontWeight || 600,
+                                    fontStyle: fontStyleVal,
+                                    textDecoration: textDecVal,
+                                    letterSpacing: letterSpacingVal,
+                                    textTransform: textTransformVal,
+                                    textShadow: textShadowVal,
+                                    WebkitTextStroke: strokeVal,
+                                    wordBreak: 'break-word',
+                                  }}
+                                >
+                                  {cleanScriptureText(secondaryText)}
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            /* Single Translation Verse */
+                            <div
+                              style={{
+                                fontSize: singleFontSize,
+                                lineHeight: selectedTheme.config.typography.lineHeight || 1.45,
+                                color: selectedTheme.config.typography.color || '#FFFFFF',
+                                fontFamily: selectedTheme.config.typography.fontFamily || 'Segoe UI, Arial, sans-serif',
+                                fontWeight: selectedTheme.config.typography.fontWeight || 600,
+                                fontStyle: fontStyleVal,
+                                textDecoration: textDecVal,
+                                letterSpacing: letterSpacingVal,
+                                textTransform: textTransformVal,
+                                textShadow: textShadowVal,
+                                WebkitTextStroke: strokeVal,
+                                textAlign: (selectedTheme.config.typography.alignment as any) || 'center',
+                                wordBreak: 'break-word',
+                              }}
+                            >
+                              {primaryText}
                             </div>
                           )}
 
-                        {/* Verse Text */}
-                        <div
-                          style={{
-                            fontFamily: selectedTheme.config.typography.fontFamily,
-                            color: selectedTheme.config.typography.color,
-                            fontWeight: selectedTheme.config.typography.fontWeight,
-                            fontSize: `${(selectedTheme.config.typography.fontSizeRem ?? 3.5) * 0.38}rem`,
-                            fontStyle: selectedTheme.config.typography.fontStyle || 'normal',
-                            textDecoration: selectedTheme.config.typography.textDecoration || 'none',
-                            lineHeight: selectedTheme.config.typography.lineHeight || 1.35,
-                            letterSpacing: `${selectedTheme.config.typography.letterSpacingPx ?? 0.5}px`,
-                            textTransform: (selectedTheme.config.typography.transform as any) || 'none',
-                            textShadow: (() => {
-                              const sh: string[] = [];
-                              if (selectedTheme.config.shadow.enabled) {
-                                sh.push(`${selectedTheme.config.shadow.offsetX}px ${selectedTheme.config.shadow.offsetY}px ${selectedTheme.config.shadow.blurPx}px ${selectedTheme.config.shadow.color}`);
-                              }
-                              if (selectedTheme.config.glow?.enabled) {
-                                sh.push(`0 0 ${selectedTheme.config.glow.radiusPx}px ${selectedTheme.config.glow.color}`);
-                              }
-                              return sh.length > 0 ? sh.join(', ') : 'none';
-                            })(),
-                            WebkitTextStroke: selectedTheme.config.outline.enabled
-                              ? `${selectedTheme.config.outline.widthPx}px ${selectedTheme.config.outline.color}`
-                              : 'none',
-                          }}
-                        >
-                          For God so loved the world, that he gave his only begotten Son, that whosoever
-                          believeth in him should not perish, but have everlasting life.
+                          {/* Reference Title if Below */}
+                          {refPosition === 'below' && renderReferenceTitle()}
                         </div>
-
-                        {/* Reference Title (if Below) */}
-                        {selectedTheme.config.typography.referencePosition === 'below' && (
-                          <div
-                            style={{
-                              fontFamily:
-                                selectedTheme.config.typography.referenceFontFamily ||
-                                selectedTheme.config.typography.fontFamily,
-                              color: selectedTheme.config.typography.referenceColor || '#F59E0B',
-                              fontWeight: selectedTheme.config.typography.referenceWeight ?? 700,
-                              fontSize: `${(selectedTheme.config.typography.referenceFontSizeRem ?? 1.4) * 0.9}rem`,
-                              fontStyle: selectedTheme.config.typography.referenceStyle || 'normal',
-                              textDecoration: selectedTheme.config.typography.referenceDecoration || 'none',
-                              marginTop: '0.5rem',
-                              letterSpacing: `${(selectedTheme.config.typography.letterSpacingPx ?? 0.5) * 0.5}px`,
-                              textShadow: (() => {
-                                const sh: string[] = [];
-                                if (selectedTheme.config.shadow.enabled) {
-                                  sh.push(`${selectedTheme.config.shadow.offsetX}px ${selectedTheme.config.shadow.offsetY}px ${selectedTheme.config.shadow.blurPx}px ${selectedTheme.config.shadow.color}`);
-                                }
-                                if (selectedTheme.config.glow?.enabled) {
-                                  sh.push(`0 0 ${selectedTheme.config.glow.radiusPx}px ${selectedTheme.config.glow.color}`);
-                                }
-                                return sh.length > 0 ? sh.join(', ') : 'none';
-                              })(),
-                            }}
-                          >
-                            <span>— John 3:16</span>
-                            {selectedTheme.config.typography.showVersion !== false && (
-                              <span
-                                style={{
-                                  marginLeft: '0.45rem',
-                                  fontSize: `${(selectedTheme.config.typography.versionFontSizeRem ?? 1.1) * 0.72}rem`,
-                                  color: selectedTheme.config.typography.versionColor || '#94A3B8',
-                                  fontWeight: selectedTheme.config.typography.versionWeight ?? 600,
-                                  fontStyle: selectedTheme.config.typography.versionStyle || 'normal',
-                                  display: 'inline-block',
-                                  verticalAlign: 'middle',
-                                  ...(selectedTheme.config.typography.versionBadgeFormat === 'pill'
-                                    ? {
-                                        backgroundColor: 'rgba(255, 255, 255, 0.16)',
-                                        padding: '1px 8px',
-                                        borderRadius: '999px',
-                                        border: '1px solid rgba(255, 255, 255, 0.25)',
-                                      }
-                                    : {}),
-                                }}
-                              >
-                                {selectedTheme.config.typography.versionBadgeFormat === 'brackets'
-                                  ? '[KJV]'
-                                  : selectedTheme.config.typography.versionBadgeFormat === 'plain' ||
-                                    selectedTheme.config.typography.versionBadgeFormat === 'pill'
-                                  ? 'KJV'
-                                  : '(KJV)'}
-                              </span>
-                            )}
-                          </div>
-                        )}
                       </div>
-                    </div>
-                  </div>
+                    );
+                  })()}
                 </div>
               </div>
 
@@ -599,8 +769,8 @@ export const ThemeEditorWorkspace: React.FC<ThemeEditorWorkspaceProps> = ({ onTh
                         }}
                       >
                         {[
-                          { id: 'verse', label: 'Verse Text', icon: 'menu_book' },
-                          { id: 'reference', label: 'Reference Title', icon: 'bookmark' },
+                          { id: 'verse', label: 'Verse', icon: 'menu_book' },
+                          { id: 'reference', label: 'Reference', icon: 'bookmark' },
                           { id: 'version', label: 'Version Tag', icon: 'translate' },
                         ].map((st) => {
                           const isSubActive = typoSubTab === st.id;
@@ -1353,53 +1523,7 @@ export const ThemeEditorWorkspace: React.FC<ThemeEditorWorkspaceProps> = ({ onTh
                             </div>
                           </div>
 
-                          {/* 2. Version Tag Format / Style */}
-                          <div>
-                            <label style={{ display: 'block', fontSize: '0.78rem', color: 'var(--text-dim)', marginBottom: '4px' }}>
-                              Version Badge Format
-                            </label>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.35rem' }}>
-                              {[
-                                { id: 'parentheses', label: '(KJV)', desc: 'Parentheses' },
-                                { id: 'brackets', label: '[KJV]', desc: 'Brackets' },
-                                { id: 'pill', label: 'Pill', desc: 'Badge Pill' },
-                                { id: 'plain', label: 'Plain', desc: 'No Enclosure' },
-                              ].map((fmt) => {
-                                const isActive = (selectedTheme.config.typography.versionBadgeFormat || 'parentheses') === fmt.id;
-                                return (
-                                  <button
-                                    key={fmt.id}
-                                    type="button"
-                                    onClick={() =>
-                                      setSelectedTheme({
-                                        ...selectedTheme,
-                                        config: {
-                                          ...selectedTheme.config,
-                                          typography: { ...selectedTheme.config.typography, versionBadgeFormat: fmt.id as any },
-                                        },
-                                      })
-                                    }
-                                    style={{
-                                      padding: '0.45rem 0.2rem',
-                                      fontSize: '0.78rem',
-                                      fontWeight: isActive ? 700 : 500,
-                                      backgroundColor: isActive ? 'var(--primary)' : 'var(--bg-panel)',
-                                      color: isActive ? '#FFFFFF' : 'var(--text-dim)',
-                                      border: isActive ? '1px solid #3B82F6' : '1px solid var(--border-color)',
-                                      borderRadius: '4px',
-                                      cursor: 'pointer',
-                                      textAlign: 'center',
-                                    }}
-                                    title={fmt.desc}
-                                  >
-                                    {fmt.label}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-
-                          {/* 3. Version Font Size */}
+                          {/* 2. Version Font Size */}
                           <div style={{ backgroundColor: 'var(--bg-panel)', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
                               <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#F1F5F9' }}>
@@ -1462,146 +1586,309 @@ export const ThemeEditorWorkspace: React.FC<ThemeEditorWorkspaceProps> = ({ onTh
                             </div>
                           </div>
 
-                          {/* 4. Version Tag Color */}
-                          <div>
-                            <label style={{ display: 'block', fontSize: '0.78rem', color: 'var(--text-dim)', marginBottom: '4px' }}>
-                              Version Tag Color
-                            </label>
-                            <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', marginBottom: '0.4rem' }}>
-                              <input
-                                type="color"
-                                value={selectedTheme.config.typography.versionColor || '#94A3B8'}
-                                onChange={(e) =>
-                                  setSelectedTheme({
-                                    ...selectedTheme,
-                                    config: {
-                                      ...selectedTheme.config,
-                                      typography: { ...selectedTheme.config.typography, versionColor: e.target.value },
-                                    },
-                                  })
-                                }
-                                style={{ width: '32px', height: '32px', padding: 0, border: 'none', cursor: 'pointer' }}
-                              />
-                              <input
-                                type="text"
-                                value={selectedTheme.config.typography.versionColor || '#94A3B8'}
-                                onChange={(e) =>
-                                  setSelectedTheme({
-                                    ...selectedTheme,
-                                    config: {
-                                      ...selectedTheme.config,
-                                      typography: { ...selectedTheme.config.typography, versionColor: e.target.value },
-                                    },
-                                  })
-                                }
-                                style={{ flex: 1, fontSize: '0.78rem' }}
-                              />
+                          {/* 3. Primary Version Name Styling */}
+                          <div style={{ backgroundColor: 'var(--bg-panel)', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#F1F5F9', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: selectedTheme.config.typography.versionColor || '#94A3B8' }} />
+                                <span>Primary Version Name</span>
+                              </label>
+                              <span style={{ fontSize: '0.7rem', padding: '1px 6px', borderRadius: '4px', backgroundColor: 'rgba(255,255,255,0.08)', color: '#94A3B8' }}>
+                                Primary / Single
+                              </span>
                             </div>
-                            <div style={{ display: 'flex', gap: '0.3rem' }}>
-                              {[
-                                { name: 'Muted Slate', hex: '#94A3B8' },
-                                { name: 'Gold Accent', hex: '#F59E0B' },
-                                { name: 'Pure White', hex: '#FFFFFF' },
-                                { name: 'Sky Blue', hex: '#60A5FA' },
-                                { name: 'Emerald', hex: '#10B981' },
-                              ].map((sw) => (
-                                <button
-                                  key={sw.hex}
-                                  type="button"
-                                  onClick={() =>
+
+                            {/* Color Picker & Swatches */}
+                            <div>
+                              <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', marginBottom: '0.35rem' }}>
+                                <input
+                                  type="color"
+                                  value={selectedTheme.config.typography.versionColor || '#94A3B8'}
+                                  onChange={(e) =>
                                     setSelectedTheme({
                                       ...selectedTheme,
                                       config: {
                                         ...selectedTheme.config,
-                                        typography: { ...selectedTheme.config.typography, versionColor: sw.hex },
+                                        typography: { ...selectedTheme.config.typography, versionColor: e.target.value },
                                       },
                                     })
                                   }
-                                  style={{
-                                    flex: 1,
-                                    fontSize: '0.68rem',
-                                    padding: '0.2rem 0',
-                                    backgroundColor: sw.hex === (selectedTheme.config.typography.versionColor || '#94A3B8') ? 'rgba(255,255,255,0.2)' : 'var(--bg-panel)',
-                                    color: sw.hex,
-                                    border: '1px solid var(--border-color)',
-                                    borderRadius: '4px',
-                                    cursor: 'pointer',
-                                    fontWeight: 700,
-                                  }}
-                                >
-                                  {sw.name}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* 5. Version Style & Weight */}
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                            <div>
-                              <label style={{ display: 'block', fontSize: '0.78rem', color: 'var(--text-dim)', marginBottom: '4px' }}>
-                                Version Style
-                              </label>
+                                  style={{ width: '32px', height: '32px', padding: 0, border: 'none', cursor: 'pointer', borderRadius: '4px' }}
+                                />
+                                <input
+                                  type="text"
+                                  value={selectedTheme.config.typography.versionColor || '#94A3B8'}
+                                  onChange={(e) =>
+                                    setSelectedTheme({
+                                      ...selectedTheme,
+                                      config: {
+                                        ...selectedTheme.config,
+                                        typography: { ...selectedTheme.config.typography, versionColor: e.target.value },
+                                      },
+                                    })
+                                  }
+                                  style={{ flex: 1, fontSize: '0.78rem' }}
+                                />
+                              </div>
                               <div style={{ display: 'flex', gap: '0.25rem' }}>
                                 {[
-                                  { id: 'normal', label: 'Normal' },
-                                  { id: 'italic', label: 'Italic' },
-                                ].map((st) => {
-                                  const isActive = (selectedTheme.config.typography.versionStyle || 'normal') === st.id;
-                                  return (
-                                    <button
-                                      key={st.id}
-                                      type="button"
-                                      onClick={() =>
-                                        setSelectedTheme({
-                                          ...selectedTheme,
-                                          config: {
-                                            ...selectedTheme.config,
-                                            typography: { ...selectedTheme.config.typography, versionStyle: st.id as any },
-                                          },
-                                        })
-                                      }
-                                      style={{
-                                        flex: 1,
-                                        padding: '0.35rem 0',
-                                        fontSize: '0.78rem',
-                                        fontWeight: isActive ? 700 : 500,
-                                        fontStyle: st.id === 'italic' ? 'italic' : 'normal',
-                                        backgroundColor: isActive ? 'var(--primary)' : 'var(--bg-panel)',
-                                        color: isActive ? '#FFFFFF' : 'var(--text-dim)',
-                                        border: isActive ? '1px solid #3B82F6' : '1px solid var(--border-color)',
-                                        borderRadius: '4px',
-                                        cursor: 'pointer',
-                                      }}
-                                    >
-                                      {st.label}
-                                    </button>
-                                  );
-                                })}
+                                  { name: 'Slate', hex: '#94A3B8' },
+                                  { name: 'White', hex: '#FFFFFF' },
+                                  { name: 'Sky', hex: '#60A5FA' },
+                                  { name: 'Gold', hex: '#F59E0B' },
+                                  { name: 'Emerald', hex: '#10B981' },
+                                ].map((sw) => (
+                                  <button
+                                    key={sw.hex}
+                                    type="button"
+                                    onClick={() =>
+                                      setSelectedTheme({
+                                        ...selectedTheme,
+                                        config: {
+                                          ...selectedTheme.config,
+                                          typography: { ...selectedTheme.config.typography, versionColor: sw.hex },
+                                        },
+                                      })
+                                    }
+                                    style={{
+                                      flex: 1,
+                                      fontSize: '0.68rem',
+                                      padding: '0.2rem 0',
+                                      backgroundColor: sw.hex === (selectedTheme.config.typography.versionColor || '#94A3B8') ? 'rgba(255,255,255,0.2)' : 'var(--bg-card)',
+                                      color: sw.hex,
+                                      border: '1px solid var(--border-color)',
+                                      borderRadius: '4px',
+                                      cursor: 'pointer',
+                                      fontWeight: 700,
+                                    }}
+                                  >
+                                    {sw.name}
+                                  </button>
+                                ))}
                               </div>
                             </div>
 
-                            <div>
-                              <label style={{ display: 'block', fontSize: '0.78rem', color: 'var(--text-dim)', marginBottom: '4px' }}>
-                                Version Weight
+                            {/* Style & Weight */}
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
+                              <div>
+                                <label style={{ display: 'block', fontSize: '0.74rem', color: 'var(--text-dim)', marginBottom: '3px' }}>
+                                  Style
+                                </label>
+                                <div style={{ display: 'flex', gap: '0.25rem' }}>
+                                  {[
+                                    { id: 'normal', label: 'Normal' },
+                                    { id: 'italic', label: 'Italic' },
+                                  ].map((st) => {
+                                    const isActive = (selectedTheme.config.typography.versionStyle || 'normal') === st.id;
+                                    return (
+                                      <button
+                                        key={st.id}
+                                        type="button"
+                                        onClick={() =>
+                                          setSelectedTheme({
+                                            ...selectedTheme,
+                                            config: {
+                                              ...selectedTheme.config,
+                                              typography: { ...selectedTheme.config.typography, versionStyle: st.id as any },
+                                            },
+                                          })
+                                        }
+                                        style={{
+                                          flex: 1,
+                                          padding: '0.3rem 0',
+                                          fontSize: '0.74rem',
+                                          fontWeight: isActive ? 700 : 500,
+                                          fontStyle: st.id === 'italic' ? 'italic' : 'normal',
+                                          backgroundColor: isActive ? 'var(--primary)' : 'var(--bg-card)',
+                                          color: isActive ? '#FFFFFF' : 'var(--text-dim)',
+                                          border: isActive ? '1px solid #3B82F6' : '1px solid var(--border-color)',
+                                          borderRadius: '4px',
+                                          cursor: 'pointer',
+                                        }}
+                                      >
+                                        {st.label}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+
+                              <div>
+                                <label style={{ display: 'block', fontSize: '0.74rem', color: 'var(--text-dim)', marginBottom: '3px' }}>
+                                  Weight
+                                </label>
+                                <select
+                                  value={selectedTheme.config.typography.versionWeight ?? 600}
+                                  onChange={(e) =>
+                                    setSelectedTheme({
+                                      ...selectedTheme,
+                                      config: {
+                                        ...selectedTheme.config,
+                                        typography: { ...selectedTheme.config.typography, versionWeight: Number(e.target.value) },
+                                      },
+                                    })
+                                  }
+                                  style={{ width: '100%', fontSize: '0.76rem', padding: '0.28rem 0.4rem' }}
+                                >
+                                  <option value={400}>Regular (400)</option>
+                                  <option value={600}>Semi-Bold (600)</option>
+                                  <option value={700}>Bold (700)</option>
+                                  <option value={800}>Extra Bold (800)</option>
+                                </select>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* 4. Secondary Version Name Styling (Dual Translation) */}
+                          <div style={{ backgroundColor: 'var(--bg-panel)', padding: '0.75rem', borderRadius: '6px', border: '1px solid rgba(245, 158, 11, 0.35)', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#F1F5F9', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: selectedTheme.config.typography.secondaryVersionColor || '#F59E0B' }} />
+                                <span>Secondary Version Name</span>
                               </label>
-                              <select
-                                value={selectedTheme.config.typography.versionWeight ?? 600}
-                                onChange={(e) =>
-                                  setSelectedTheme({
-                                    ...selectedTheme,
-                                    config: {
-                                      ...selectedTheme.config,
-                                      typography: { ...selectedTheme.config.typography, versionWeight: Number(e.target.value) },
-                                    },
-                                  })
-                                }
-                                style={{ width: '100%' }}
-                              >
-                                <option value={400}>Regular (400)</option>
-                                <option value={600}>Semi-Bold (600)</option>
-                                <option value={700}>Bold (700)</option>
-                                <option value={800}>Extra Bold (800)</option>
-                              </select>
+                              <span style={{ fontSize: '0.7rem', padding: '1px 6px', borderRadius: '4px', backgroundColor: 'rgba(245, 158, 11, 0.15)', color: '#F59E0B', fontWeight: 600 }}>
+                                Dual Mode
+                              </span>
+                            </div>
+
+                            {/* Color Picker & Swatches */}
+                            <div>
+                              <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', marginBottom: '0.35rem' }}>
+                                <input
+                                  type="color"
+                                  value={selectedTheme.config.typography.secondaryVersionColor || '#F59E0B'}
+                                  onChange={(e) =>
+                                    setSelectedTheme({
+                                      ...selectedTheme,
+                                      config: {
+                                        ...selectedTheme.config,
+                                        typography: { ...selectedTheme.config.typography, secondaryVersionColor: e.target.value },
+                                      },
+                                    })
+                                  }
+                                  style={{ width: '32px', height: '32px', padding: 0, border: 'none', cursor: 'pointer', borderRadius: '4px' }}
+                                />
+                                <input
+                                  type="text"
+                                  value={selectedTheme.config.typography.secondaryVersionColor || '#F59E0B'}
+                                  onChange={(e) =>
+                                    setSelectedTheme({
+                                      ...selectedTheme,
+                                      config: {
+                                        ...selectedTheme.config,
+                                        typography: { ...selectedTheme.config.typography, secondaryVersionColor: e.target.value },
+                                      },
+                                    })
+                                  }
+                                  style={{ flex: 1, fontSize: '0.78rem' }}
+                                />
+                              </div>
+                              <div style={{ display: 'flex', gap: '0.25rem' }}>
+                                {[
+                                  { name: 'Gold', hex: '#F59E0B' },
+                                  { name: 'Amber', hex: '#D97706' },
+                                  { name: 'Coral', hex: '#F87171' },
+                                  { name: 'Sky', hex: '#60A5FA' },
+                                  { name: 'White', hex: '#FFFFFF' },
+                                ].map((sw) => (
+                                  <button
+                                    key={sw.hex}
+                                    type="button"
+                                    onClick={() =>
+                                      setSelectedTheme({
+                                        ...selectedTheme,
+                                        config: {
+                                          ...selectedTheme.config,
+                                          typography: { ...selectedTheme.config.typography, secondaryVersionColor: sw.hex },
+                                        },
+                                      })
+                                    }
+                                    style={{
+                                      flex: 1,
+                                      fontSize: '0.68rem',
+                                      padding: '0.2rem 0',
+                                      backgroundColor: sw.hex === (selectedTheme.config.typography.secondaryVersionColor || '#F59E0B') ? 'rgba(245, 158, 11, 0.25)' : 'var(--bg-card)',
+                                      color: sw.hex,
+                                      border: '1px solid var(--border-color)',
+                                      borderRadius: '4px',
+                                      cursor: 'pointer',
+                                      fontWeight: 700,
+                                    }}
+                                  >
+                                    {sw.name}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Style & Weight */}
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
+                              <div>
+                                <label style={{ display: 'block', fontSize: '0.74rem', color: 'var(--text-dim)', marginBottom: '3px' }}>
+                                  Style
+                                </label>
+                                <div style={{ display: 'flex', gap: '0.25rem' }}>
+                                  {[
+                                    { id: 'normal', label: 'Normal' },
+                                    { id: 'italic', label: 'Italic' },
+                                  ].map((st) => {
+                                    const isActive = (selectedTheme.config.typography.secondaryVersionStyle || 'normal') === st.id;
+                                    return (
+                                      <button
+                                        key={st.id}
+                                        type="button"
+                                        onClick={() =>
+                                          setSelectedTheme({
+                                            ...selectedTheme,
+                                            config: {
+                                              ...selectedTheme.config,
+                                              typography: { ...selectedTheme.config.typography, secondaryVersionStyle: st.id as any },
+                                            },
+                                          })
+                                        }
+                                        style={{
+                                          flex: 1,
+                                          padding: '0.3rem 0',
+                                          fontSize: '0.74rem',
+                                          fontWeight: isActive ? 700 : 500,
+                                          fontStyle: st.id === 'italic' ? 'italic' : 'normal',
+                                          backgroundColor: isActive ? 'var(--primary)' : 'var(--bg-card)',
+                                          color: isActive ? '#FFFFFF' : 'var(--text-dim)',
+                                          border: isActive ? '1px solid #3B82F6' : '1px solid var(--border-color)',
+                                          borderRadius: '4px',
+                                          cursor: 'pointer',
+                                        }}
+                                      >
+                                        {st.label}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+
+                              <div>
+                                <label style={{ display: 'block', fontSize: '0.74rem', color: 'var(--text-dim)', marginBottom: '3px' }}>
+                                  Weight
+                                </label>
+                                <select
+                                  value={selectedTheme.config.typography.secondaryVersionWeight ?? 600}
+                                  onChange={(e) =>
+                                    setSelectedTheme({
+                                      ...selectedTheme,
+                                      config: {
+                                        ...selectedTheme.config,
+                                        typography: { ...selectedTheme.config.typography, secondaryVersionWeight: Number(e.target.value) },
+                                      },
+                                    })
+                                  }
+                                  style={{ width: '100%', fontSize: '0.76rem', padding: '0.28rem 0.4rem' }}
+                                >
+                                  <option value={400}>Regular (400)</option>
+                                  <option value={600}>Semi-Bold (600)</option>
+                                  <option value={700}>Bold (700)</option>
+                                  <option value={800}>Extra Bold (800)</option>
+                                </select>
+                              </div>
                             </div>
                           </div>
                         </>

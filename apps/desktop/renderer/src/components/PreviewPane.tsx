@@ -1,6 +1,17 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { BibleVersionDto, PresentationStateDto, ThemeDto } from '@scripture-studio/shared-types';
 import { MaterialIcon } from './MaterialIcon.js';
+
+function cleanScriptureText(text: string): string {
+  if (!text) return '';
+  return text
+    .replace(/<sup\b[^>]*>[\s\S]*?<\/sup>/gi, '')
+    .replace(/<f\b[^>]*>[\s\S]*?<\/f>/gi, '')
+    .replace(/<note\b[^>]*>[\s\S]*?<\/note>/gi, '')
+    .replace(/<[^>]+>/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
 interface PreviewPaneProps {
   state: PresentationStateDto | null;
@@ -14,6 +25,8 @@ interface PreviewPaneProps {
   onTakeLive: () => void;
   onNextVerse?: () => void;
   onPrevVerse?: () => void;
+  onFreezeToggle?: () => void;
+  onHideToggle?: () => void;
 }
 
 export default function PreviewPane({
@@ -28,8 +41,78 @@ export default function PreviewPane({
   onTakeLive,
   onNextVerse,
   onPrevVerse,
+  onFreezeToggle,
+  onHideToggle,
 }: PreviewPaneProps): React.JSX.Element {
   const slide = state?.previewSlide;
+  const isFrozen = state?.isFrozen || false;
+  const isVisible = state?.isVisible !== false;
+
+  const previewCanvasRef = useRef<HTMLDivElement>(null);
+  const [isDownloading, setIsDownloading] = useState<boolean>(false);
+  const [downloadSuccess, setDownloadSuccess] = useState<string | null>(null);
+  const [savedFilePath, setSavedFilePath] = useState<string | null>(null);
+
+  const handleDownloadPreview = async () => {
+    if (!slide || isDownloading) return;
+    setIsDownloading(true);
+    setDownloadSuccess(null);
+    setSavedFilePath(null);
+
+    const safeRef = slide.referenceDisplay.replace(/[\s:]+/g, '_').replace(/[/\\?%*:|"<>]+/g, '_');
+    const safeVer = slide.versionAbbreviation.replace(/[\s/]+/g, '_').replace(/[/\\?%*:|"<>]+/g, '_');
+    const filename = `Scripture_${safeRef}_${safeVer}.png`;
+
+    try {
+      let dataUrl: string | null = null;
+
+      // 1. Capture high-definition Full HD 1080p slide via native offscreen engine
+      if (window.scriptureStudioApi?.presentation?.capturePreview) {
+        const capRes = await window.scriptureStudioApi.presentation.capturePreview({
+          width: 1920,
+          height: 1080,
+        });
+        if (capRes?.success && capRes.dataUrl) {
+          dataUrl = capRes.dataUrl;
+        }
+      }
+
+      // 2. Save image using native Electron dialog or direct download
+      if (dataUrl && window.scriptureStudioApi?.presentation?.savePreviewImage) {
+        const saveRes = await window.scriptureStudioApi.presentation.savePreviewImage({
+          dataUrl,
+          defaultFilename: filename,
+        });
+
+        if (saveRes?.success && saveRes.filePath) {
+          setDownloadSuccess(saveRes.filename || filename);
+          setSavedFilePath(saveRes.filePath);
+          setTimeout(() => setDownloadSuccess(null), 6000);
+          setIsDownloading(false);
+          return;
+        } else if (saveRes?.canceled) {
+          setIsDownloading(false);
+          return;
+        }
+      }
+
+      // 3. Fallback: Browser direct download
+      if (dataUrl) {
+        const a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setDownloadSuccess(filename);
+        setTimeout(() => setDownloadSuccess(null), 5000);
+      }
+    } catch (err) {
+      console.error('Download preview error:', err);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   const bg = activeTheme?.config.background;
   let bgStyle: React.CSSProperties = {
@@ -53,51 +136,132 @@ export default function PreviewPane({
     }
   }
 
-  // Dynamic compact sizing for 16:9 monitor
-  const totalLength = slide?.multiVersionSlots?.reduce((acc, slot) => acc + slot.text.length, 0) || 0;
-  const previewFontSize = totalLength > 300 ? '0.78rem' : totalLength > 180 ? '0.84rem' : '0.92rem';
-  const previewPadding = totalLength > 250 ? '0.2rem 0.5rem' : '0.35rem 0.6rem';
-  const previewGap = totalLength > 250 ? '0.25rem' : '0.4rem';
+  // Dynamic compact sizing for 16:9 monitor (matches Theme Styler 1:1, perfectly scaled to avoid overflow)
+  const isDual = Boolean(slide?.multiVersionSlots && slide.multiVersionSlots.length > 1);
+  const totalLength = isDual
+    ? slide?.multiVersionSlots?.reduce((acc, slot) => acc + slot.text.length, 0) || 0
+    : slide?.verses ? slide.verses.reduce((acc, v) => acc + v.text.length, 0) : 0;
 
-  // Version Tag typography styling from active theme
+  const userBaseRem = activeTheme?.config.typography.fontSizeRem ?? 3.5;
+  const fontMultiplier = isDual
+    ? Math.max(0.70, Math.min(1.18, userBaseRem / 3.5))
+    : Math.max(0.65, Math.min(1.35, userBaseRem / 3.5));
+
+  // Dual translation sizing for compact 16:9 preview monitor (~300-340px width x ~170-190px height)
+  let dualBaseRem = 0.80;
+  let previewPadding = '0.28rem 0.55rem';
+  let previewGap = '0.35rem';
+  let refBaseRem = 0.95;
+  let slotVersionBaseRem = 0.65;
+  let lineHeightVal = activeTheme?.config.typography.lineHeight || 1.35;
+
+  if (totalLength > 450) {
+    dualBaseRem = 0.50;
+    previewPadding = '0.12rem 0.40rem';
+    previewGap = '0.18rem';
+    refBaseRem = 0.70;
+    slotVersionBaseRem = 0.52;
+    lineHeightVal = Math.min(lineHeightVal, 1.22);
+  } else if (totalLength > 320) {
+    dualBaseRem = 0.56;
+    previewPadding = '0.15rem 0.45rem';
+    previewGap = '0.22rem';
+    refBaseRem = 0.75;
+    slotVersionBaseRem = 0.55;
+    lineHeightVal = Math.min(lineHeightVal, 1.25);
+  } else if (totalLength > 220) {
+    dualBaseRem = 0.64;
+    previewPadding = '0.20rem 0.50rem';
+    previewGap = '0.26rem';
+    refBaseRem = 0.82;
+    slotVersionBaseRem = 0.58;
+    lineHeightVal = Math.min(lineHeightVal, 1.28);
+  } else if (totalLength > 120) {
+    dualBaseRem = 0.72;
+    previewPadding = '0.24rem 0.52rem';
+    previewGap = '0.30rem';
+    refBaseRem = 0.88;
+    slotVersionBaseRem = 0.62;
+    lineHeightVal = Math.min(lineHeightVal, 1.32);
+  }
+
+  const previewFontSize = `${dualBaseRem * fontMultiplier}rem`;
+  const refPosition = activeTheme?.config.typography.referencePosition || 'above';
+  const refMultiplier = (activeTheme?.config.typography.referenceFontSizeRem ?? 1.4) / 1.4;
+  const refFontSize = `${refBaseRem * refMultiplier}rem`;
+  const versionMultiplier = (activeTheme?.config.typography.versionFontSizeRem ?? 1.1) / 1.1;
+  const slotVersionFontSize = `${slotVersionBaseRem * versionMultiplier}rem`;
+
+  // Single translation sizing
+  let singleBaseRem = 1.05;
+  if (totalLength > 360) {
+    singleBaseRem = 0.75;
+  } else if (totalLength > 240) {
+    singleBaseRem = 0.85;
+  } else if (totalLength > 140) {
+    singleBaseRem = 0.95;
+  }
+  const singleFontSize = `${singleBaseRem * fontMultiplier}rem`;
+
+  // Typography, shadows, stroke from active theme
+  const shadows: string[] = [];
+  if (activeTheme?.config.shadow.enabled) {
+    shadows.push(
+      `${activeTheme.config.shadow.offsetX}px ${activeTheme.config.shadow.offsetY}px ${activeTheme.config.shadow.blurPx}px ${activeTheme.config.shadow.color}`
+    );
+  }
+  if (activeTheme?.config.glow?.enabled) {
+    shadows.push(`0 0 ${activeTheme.config.glow.radiusPx}px ${activeTheme.config.glow.color}`);
+  }
+  const textShadowVal = shadows.length > 0 ? shadows.join(', ') : '0 1px 4px rgba(0,0,0,0.8)';
+  const strokeVal = activeTheme?.config.outline.enabled
+    ? `${activeTheme.config.outline.widthPx}px ${activeTheme.config.outline.color}`
+    : undefined;
+  const fontStyleVal = activeTheme?.config.typography.fontStyle || 'normal';
+  const textDecVal = activeTheme?.config.typography.textDecoration || 'none';
+  const letterSpacingVal = `${activeTheme?.config.typography.letterSpacingPx ?? 0.5}px`;
+  const textTransformVal = (activeTheme?.config.typography.transform as any) || 'none';
+
+  // Version Tag typography styling from active theme (customizable for both translations)
   const showVersion = activeTheme?.config.typography.showVersion !== false;
-  const versionFormat = activeTheme?.config.typography.versionBadgeFormat || 'parentheses';
-  const versionColor = activeTheme?.config.typography.versionColor || '#94A3B8';
-  const versionFontSize = `${(activeTheme?.config.typography.versionFontSizeRem ?? 1.1) * 0.72}rem`;
-  const versionWeight = activeTheme?.config.typography.versionWeight ?? 600;
-  const versionStyle = activeTheme?.config.typography.versionStyle || 'normal';
+  const primaryVersionColor = activeTheme?.config.typography.versionColor || '#94A3B8';
+  const secondaryVersionColor = activeTheme?.config.typography.secondaryVersionColor || '#F59E0B';
+  const primaryVersionWeight = activeTheme?.config.typography.versionWeight ?? 600;
+  const secondaryVersionWeight = activeTheme?.config.typography.secondaryVersionWeight ?? primaryVersionWeight;
+  const primaryVersionStyle = activeTheme?.config.typography.versionStyle || 'normal';
+  const secondaryVersionStyle = activeTheme?.config.typography.secondaryVersionStyle || primaryVersionStyle;
 
-  const formatVersionTag = (abbr: string) => {
-    if (versionFormat === 'brackets') return `[${abbr}]`;
-    if (versionFormat === 'pill' || versionFormat === 'plain') return abbr;
-    return `(${abbr})`;
-  };
+  // Reference typography styling from active theme
+  const refFontFamily =
+    activeTheme?.config.typography.referenceFontFamily ||
+    activeTheme?.config.typography.fontFamily ||
+    'Segoe UI, Arial, sans-serif';
+  const refColor = activeTheme?.config.typography.referenceColor || '#F59E0B';
+  const refWeight = activeTheme?.config.typography.referenceWeight ?? 800;
+  const refStyle = activeTheme?.config.typography.referenceStyle || 'normal';
+  const refDec = activeTheme?.config.typography.referenceDecoration || 'none';
 
-  const renderVersionBadge = (abbr: string) => {
-    if (!showVersion) return null;
+  const renderReferenceTitle = () => {
+    if (!slide || refPosition === 'hidden') return null;
     return (
-      <span
+      <div
         style={{
-          marginLeft: '0.35rem',
-          fontSize: versionFontSize,
-          color: versionColor,
-          fontWeight: versionWeight,
-          fontStyle: versionStyle,
-          display: 'inline-block',
-          verticalAlign: 'middle',
-          letterSpacing: '0.02em',
-          ...(versionFormat === 'pill'
-            ? {
-                backgroundColor: 'rgba(255, 255, 255, 0.14)',
-                padding: '1px 6px',
-                borderRadius: '999px',
-                border: '1px solid rgba(255, 255, 255, 0.22)',
-              }
-            : {}),
+          fontSize: refFontSize,
+          fontWeight: refWeight,
+          color: refColor,
+          fontStyle: refStyle,
+          textDecoration: refDec,
+          fontFamily: refFontFamily,
+          marginBottom: refPosition === 'below' ? 0 : '1.5cqh',
+          marginTop: refPosition === 'below' ? '1.5cqh' : 0,
+          letterSpacing: '0.04em',
+          textShadow: textShadowVal,
+          textAlign: (activeTheme?.config.typography.alignment as any) || 'center',
+          flexShrink: 0,
         }}
       >
-        {formatVersionTag(abbr)}
-      </span>
+        <span>{refPosition === 'below' ? `— ${slide.referenceDisplay}` : slide.referenceDisplay}</span>
+      </div>
     );
   };
 
@@ -107,23 +271,52 @@ export default function PreviewPane({
         <h3 style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-muted)' }}>
           PREVIEW MONITOR
         </h3>
-        {state && (
-          <span
-            className={`badge ${
-              state.mode === 'LIVE'
-                ? 'badge-live'
-                : state.mode === 'FROZEN'
-                ? 'badge-frozen'
-                : 'badge-idle'
-            }`}
-          >
-            {state.mode}
-          </span>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          {slide && (
+            <button
+              type="button"
+              onClick={handleDownloadPreview}
+              disabled={isDownloading}
+              style={{
+                fontSize: '0.74rem',
+                padding: '3px 10px',
+                backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                color: '#38BDF8',
+                border: '1px solid rgba(56, 189, 248, 0.35)',
+                borderRadius: '4px',
+                cursor: isDownloading ? 'wait' : 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                fontWeight: 600,
+                transition: 'all 0.15s ease',
+              }}
+              title="Download slide as high-definition Full HD 1080p image (PNG)"
+            >
+              <MaterialIcon name={isDownloading ? 'hourglass_top' : 'download'} size={15} />
+              <span>{isDownloading ? 'Rendering HD...' : 'Download HD'}</span>
+            </button>
+          )}
+
+          {state && (
+            <span
+              className={`badge ${
+                state.mode === 'LIVE'
+                  ? 'badge-live'
+                  : state.mode === 'FROZEN'
+                  ? 'badge-frozen'
+                  : 'badge-idle'
+              }`}
+            >
+              {state.mode}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* 16:9 Scaled Preview Canvas */}
       <div
+        ref={previewCanvasRef}
         style={{
           aspectRatio: '16/9',
           width: '100%',
@@ -132,9 +325,14 @@ export default function PreviewPane({
           border: '2px solid var(--border-color)',
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'center',
+          justifyContent:
+            activeTheme?.config.placement.verticalAlign === 'top'
+              ? 'flex-start'
+              : activeTheme?.config.placement.verticalAlign === 'bottom'
+              ? 'flex-end'
+              : 'center',
           alignItems: 'center',
-          padding: '0.85rem 1rem',
+          padding: `${activeTheme?.config.margins.topPercent ?? 4}% ${activeTheme?.config.margins.rightPercent ?? 6}% ${activeTheme?.config.margins.bottomPercent ?? 4}% ${activeTheme?.config.margins.leftPercent ?? 6}%`,
           textAlign: (activeTheme?.config.typography.alignment as any) || 'center',
           position: 'relative',
           boxSizing: 'border-box',
@@ -145,33 +343,36 @@ export default function PreviewPane({
           <div
             style={{
               maxWidth: `${activeTheme?.config.margins.containerMaxWidthPercent ?? 94}%`,
+              maxHeight: '100%',
               width: '100%',
-              padding: `${activeTheme?.config.margins.paddingPercent ?? 2}%`,
+              padding: `${Math.min(activeTheme?.config.margins.paddingPercent ?? 2, 2)}%`,
               boxSizing: 'border-box',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent:
+                activeTheme?.config.placement.verticalAlign === 'top'
+                  ? 'flex-start'
+                  : activeTheme?.config.placement.verticalAlign === 'bottom'
+                  ? 'flex-end'
+                  : 'center',
+              overflow: 'hidden',
             }}
           >
             {/* Reference Title if Above */}
-            {activeTheme?.config.typography.referencePosition !== 'hidden' &&
-              activeTheme?.config.typography.referencePosition !== 'below' && (
-                <div
-                  style={{
-                    fontSize: totalLength > 250 ? '0.95rem' : '1.15rem',
-                    fontWeight: activeTheme?.config.typography.referenceWeight ?? 700,
-                    color: activeTheme?.config.typography.referenceColor || '#F59E0B',
-                    fontStyle: activeTheme?.config.typography.referenceStyle || 'normal',
-                    textDecoration: activeTheme?.config.typography.referenceDecoration || 'none',
-                    fontFamily: activeTheme?.config.typography.referenceFontFamily || activeTheme?.config.typography.fontFamily || 'Segoe UI, Arial, sans-serif',
-                    marginBottom: '0.35rem',
-                    letterSpacing: '0.03em',
-                  }}
-                >
-                  <span>{slide.referenceDisplay}</span>
-                  {renderVersionBadge(slide.versionAbbreviation)}
-                </div>
-              )}
+            {refPosition !== 'below' && renderReferenceTitle()}
 
-            {slide.multiVersionSlots && slide.multiVersionSlots.length > 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: previewGap }}>
+            {isDual && slide.multiVersionSlots ? (
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: previewGap,
+                  width: '100%',
+                  maxHeight: '100%',
+                  boxSizing: 'border-box',
+                  overflow: 'hidden',
+                }}
+              >
                 {slide.multiVersionSlots.map((slot, idx) => (
                   <div
                     key={slot.versionAbbreviation}
@@ -180,44 +381,44 @@ export default function PreviewPane({
                       borderRadius: '5px',
                       backgroundColor: idx === 0 ? 'rgba(255, 255, 255, 0.05)' : 'rgba(245, 158, 11, 0.08)',
                       border: idx === 0 ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid rgba(245, 158, 11, 0.28)',
+                      textAlign: (activeTheme?.config.typography.alignment as any) || 'center',
+                      boxSizing: 'border-box',
+                      width: '100%',
+                      overflow: 'hidden',
                     }}
                   >
                     {showVersion && (
                       <div
                         style={{
-                          fontSize: '0.65rem',
-                          fontWeight: versionWeight,
-                          color: versionColor || (idx === 0 ? '#94A3B8' : '#F59E0B'),
-                          fontStyle: versionStyle,
-                          marginBottom: '1px',
-                          letterSpacing: '0.04em',
+                          fontSize: slotVersionFontSize,
+                          fontWeight: idx === 0 ? primaryVersionWeight : secondaryVersionWeight,
+                          color: idx === 0 ? primaryVersionColor : secondaryVersionColor,
+                          fontStyle: idx === 0 ? primaryVersionStyle : secondaryVersionStyle,
+                          marginBottom: '0.3cqh',
+                          letterSpacing: '0.06em',
                           textTransform: 'uppercase',
-                          ...(versionFormat === 'pill'
-                            ? {
-                                backgroundColor: 'rgba(255, 255, 255, 0.12)',
-                                padding: '1px 5px',
-                                borderRadius: '4px',
-                                display: 'inline-block',
-                              }
-                            : {}),
                         }}
                       >
-                        {formatVersionTag(slot.versionAbbreviation)}
+                        {slot.versionName}
                       </div>
                     )}
                     <div
                       style={{
                         fontSize: previewFontSize,
-                        lineHeight: activeTheme?.config.typography.lineHeight || 1.35,
+                        lineHeight: lineHeightVal,
                         color: activeTheme?.config.typography.color || '#FFFFFF',
                         fontFamily: activeTheme?.config.typography.fontFamily || 'Segoe UI, Arial, sans-serif',
-                        fontStyle: activeTheme?.config.typography.fontStyle || 'normal',
-                        textDecoration: activeTheme?.config.typography.textDecoration || 'none',
-                        letterSpacing: `${activeTheme?.config.typography.letterSpacingPx ?? 0.5}px`,
-                        textShadow: '0 1px 4px rgba(0,0,0,0.8)',
+                        fontWeight: activeTheme?.config.typography.fontWeight || 600,
+                        fontStyle: fontStyleVal,
+                        textDecoration: textDecVal,
+                        letterSpacing: letterSpacingVal,
+                        textTransform: textTransformVal,
+                        textShadow: textShadowVal,
+                        WebkitTextStroke: strokeVal,
+                        wordBreak: 'break-word',
                       }}
                     >
-                      {slot.text}
+                      {cleanScriptureText(slot.text)}
                     </div>
                   </div>
                 ))}
@@ -225,14 +426,21 @@ export default function PreviewPane({
             ) : (
               <div
                 style={{
-                  fontSize: '1.05rem',
+                  fontSize: singleFontSize,
                   lineHeight: activeTheme?.config.typography.lineHeight || 1.45,
                   color: activeTheme?.config.typography.color || '#FFFFFF',
                   fontFamily: activeTheme?.config.typography.fontFamily || 'Segoe UI, Arial, sans-serif',
-                  fontStyle: activeTheme?.config.typography.fontStyle || 'normal',
-                  textDecoration: activeTheme?.config.typography.textDecoration || 'none',
-                  letterSpacing: `${activeTheme?.config.typography.letterSpacingPx ?? 0.5}px`,
-                  textShadow: '0 2px 6px rgba(0,0,0,0.8)',
+                  fontWeight: activeTheme?.config.typography.fontWeight || 600,
+                  fontStyle: fontStyleVal,
+                  textDecoration: textDecVal,
+                  letterSpacing: letterSpacingVal,
+                  textTransform: textTransformVal,
+                  textShadow: textShadowVal,
+                  WebkitTextStroke: strokeVal,
+                  textAlign: (activeTheme?.config.typography.alignment as any) || 'center',
+                  wordBreak: 'break-word',
+                  maxHeight: '100%',
+                  overflow: 'hidden',
                 }}
               >
                 {slide.verses.map((v) => (
@@ -240,30 +448,14 @@ export default function PreviewPane({
                     {slide.verses.length > 1 && (
                       <sup style={{ color: '#94A3B8', marginRight: '4px' }}>{v.verseNumber}</sup>
                     )}
-                    {v.text}{' '}
+                    {cleanScriptureText(v.text)}{' '}
                   </span>
                 ))}
               </div>
             )}
 
             {/* Reference Title if Below */}
-            {activeTheme?.config.typography.referencePosition === 'below' && (
-              <div
-                style={{
-                  fontSize: totalLength > 250 ? '0.95rem' : '1.15rem',
-                  fontWeight: activeTheme?.config.typography.referenceWeight ?? 700,
-                  color: activeTheme?.config.typography.referenceColor || '#F59E0B',
-                  fontStyle: activeTheme?.config.typography.referenceStyle || 'normal',
-                  textDecoration: activeTheme?.config.typography.referenceDecoration || 'none',
-                  fontFamily: activeTheme?.config.typography.referenceFontFamily || activeTheme?.config.typography.fontFamily || 'Segoe UI, Arial, sans-serif',
-                  marginTop: '0.4rem',
-                  letterSpacing: '0.03em',
-                }}
-              >
-                <span>— {slide.referenceDisplay}</span>
-                {renderVersionBadge(slide.versionAbbreviation)}
-              </div>
-            )}
+            {refPosition === 'below' && renderReferenceTitle()}
           </div>
         ) : (
           <div style={{ color: 'var(--text-dim)', fontSize: '0.85rem' }}>
@@ -271,6 +463,50 @@ export default function PreviewPane({
           </div>
         )}
       </div>
+
+      {/* Download Success Banner */}
+      {downloadSuccess && (
+        <div
+          style={{
+            padding: '0.45rem 0.65rem',
+            backgroundColor: 'rgba(16, 185, 129, 0.12)',
+            border: '1px solid rgba(16, 185, 129, 0.35)',
+            borderRadius: '6px',
+            fontSize: '0.76rem',
+            color: '#34D399',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '0.5rem',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', overflow: 'hidden' }}>
+            <MaterialIcon name="check_circle" size={16} color="#34D399" />
+            <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+              Saved: {downloadSuccess}
+            </span>
+          </div>
+          {savedFilePath && window.scriptureStudioApi?.presentation?.showItemInFolder && (
+            <button
+              type="button"
+              onClick={() => window.scriptureStudioApi.presentation.showItemInFolder!(savedFilePath)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#6EE7B7',
+                textDecoration: 'underline',
+                cursor: 'pointer',
+                fontSize: '0.74rem',
+                padding: 0,
+                whiteSpace: 'nowrap',
+                fontWeight: 600,
+              }}
+            >
+              Open Folder
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Global Translation Selector (Dedicated Section Below Preview Monitor) */}
       <div
@@ -386,8 +622,9 @@ export default function PreviewPane({
         </div>
       </div>
 
-      {/* Quick Verse Navigation & Take Live */}
+      {/* Quick Verse Navigation, Broadcast Output Controls & Take Live */}
       <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        {/* Row 1: Verse Navigation */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
           <button
             className="btn-secondary"
@@ -432,6 +669,56 @@ export default function PreviewPane({
           </button>
         </div>
 
+        {/* Row 2: Freeze & Hide Broadcast Output Modifiers */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+          <button
+            type="button"
+            className={`btn-freeze ${isFrozen ? 'active' : ''}`}
+            onClick={onFreezeToggle}
+            style={{
+              padding: '0.6rem 0.4rem',
+              fontSize: '0.82rem',
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.35rem',
+              cursor: 'pointer',
+              borderRadius: '6px',
+            }}
+            title="Freeze display on current frame (F9)"
+          >
+            <MaterialIcon name="ac_unit" size={17} />
+            <span>{isFrozen ? 'UNFREEZE (F9)' : 'FREEZE (F9)'}</span>
+          </button>
+
+          <button
+            type="button"
+            className={!isVisible ? 'btn-primary' : 'btn-secondary'}
+            onClick={onHideToggle}
+            style={{
+              padding: '0.6rem 0.4rem',
+              fontSize: '0.82rem',
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.35rem',
+              backgroundColor: !isVisible ? '#D97706' : undefined,
+              borderColor: !isVisible ? '#F59E0B' : undefined,
+              color: !isVisible ? '#FFFFFF' : undefined,
+              boxShadow: !isVisible ? '0 0 10px rgba(245, 158, 11, 0.4)' : undefined,
+              cursor: 'pointer',
+              borderRadius: '6px',
+            }}
+            title={isVisible ? 'Hide output screen to black (F10)' : 'Unhide output screen back to live (F10)'}
+          >
+            <MaterialIcon name={isVisible ? 'visibility_off' : 'visibility'} size={17} />
+            <span>{isVisible ? 'HIDE (F10)' : 'UNHIDE (F10)'}</span>
+          </button>
+        </div>
+
+        {/* Row 3: Take Live */}
         <button
           className="btn-primary"
           style={{

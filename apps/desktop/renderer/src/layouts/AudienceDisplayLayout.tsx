@@ -1,6 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { PresentationStateDto, ThemeDto } from '@scripture-studio/shared-types';
-import { MaterialIcon } from '../components/MaterialIcon.js';
+
+function cleanScriptureText(text: string): string {
+  if (!text) return '';
+  return text
+    .replace(/<sup\b[^>]*>[\s\S]*?<\/sup>/gi, '')
+    .replace(/<f\b[^>]*>[\s\S]*?<\/f>/gi, '')
+    .replace(/<note\b[^>]*>[\s\S]*?<\/note>/gi, '')
+    .replace(/<[^>]+>/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
 export default function AudienceDisplayLayout(): React.JSX.Element {
   const [state, setState] = useState<PresentationStateDto | null>(null);
@@ -10,6 +20,7 @@ export default function AudienceDisplayLayout(): React.JSX.Element {
   useEffect(() => {
     // Hide mouse cursor on audience output window
     document.body.style.cursor = 'none';
+    document.body.style.overflow = 'hidden';
 
     const handleKeyDown = async (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -66,9 +77,36 @@ export default function AudienceDisplayLayout(): React.JSX.Element {
     }
   }, [state?.activeThemeId, themes]);
 
-  const slide = state?.liveSlide || (state?.mode === 'PREVIEW' ? state?.previewSlide : null);
-  const isHidden = state?.mode === 'HIDDEN';
-  const isIdle = !slide || state?.mode === 'IDLE';
+  const isCapture = new URLSearchParams(window.location.search).get('capture') === '1';
+  const slide = isCapture
+    ? (state?.previewSlide || state?.liveSlide || null)
+    : (state?.liveSlide || (state?.mode === 'PREVIEW' ? state?.previewSlide : null));
+  const isHidden = !isCapture && state?.mode === 'HIDDEN';
+  const isIdle = !slide || (!isCapture && state?.mode === 'IDLE');
+
+  // Notify high-definition capture runner when fonts, images, and layout are painted
+  useEffect(() => {
+    if (isCapture && slide && theme) {
+      document.fonts.ready.then(() => {
+        const bg = theme.config.background;
+        if (bg.type === 'image' && bg.imageUrl) {
+          const img = new Image();
+          img.src = bg.imageUrl;
+          const markReady = () => {
+            setTimeout(() => {
+              (window as any).__CAPTURE_READY__ = true;
+            }, 80);
+          };
+          img.onload = markReady;
+          img.onerror = markReady;
+        } else {
+          setTimeout(() => {
+            (window as any).__CAPTURE_READY__ = true;
+          }, 80);
+        }
+      });
+    }
+  }, [isCapture, slide, theme]);
 
   // Standby / Idle / Hidden Blackout with Subtle Watermark
   if (isHidden || isIdle) {
@@ -86,8 +124,8 @@ export default function AudienceDisplayLayout(): React.JSX.Element {
           userSelect: 'none',
         }}
       >
-        <div style={{ opacity: 0.18, color: '#FFFFFF' }}>
-          <MaterialIcon name="menu_book" size={64} />
+        <div style={{ opacity: 0.28 }}>
+          <img src="./icon.png" alt="Scripture Studio" style={{ width: '84px', height: '84px', borderRadius: '16px', objectFit: 'contain' }} />
         </div>
         <div
           style={{
@@ -165,17 +203,23 @@ export default function AudienceDisplayLayout(): React.JSX.Element {
   const letterSpacingVal = `${theme?.config.typography.letterSpacingPx ?? 0.5}px`;
   const textTransformVal = (theme?.config.typography.transform as any) || 'none';
 
-  // Dynamic Auto-Scaling for Dual vs Single Translation
+  // Dynamic Auto-Scaling for Dual vs Single Translation with Overflow Protection
   const totalDualLength =
     slide.multiVersionSlots?.reduce((acc, slot) => acc + slot.text.length, 0) || 0;
 
-  const dualScale = totalDualLength > 320 ? 0.42 : totalDualLength > 200 ? 0.5 : totalDualLength > 110 ? 0.58 : 0.65;
+  let dualScale = totalDualLength > 400 ? 0.36 : totalDualLength > 320 ? 0.42 : totalDualLength > 200 ? 0.5 : totalDualLength > 110 ? 0.58 : 0.65;
+  if (userBaseRem > 4.5) {
+    dualScale = dualScale * (4.5 / userBaseRem);
+  }
   const dualFontSize = `calc(${userBaseRem * dualScale}vw)`;
   const slotPadding = totalDualLength > 200 ? '1.0vh 1.8vw' : '1.3vh 2.2vw';
   const slotGap = totalDualLength > 200 ? '1.0vh' : '1.4vh';
 
   const singleTotalLength = slide.verses.reduce((acc, v) => acc + v.text.length, 0);
-  const singleScale = singleTotalLength > 280 ? 0.65 : singleTotalLength > 160 ? 0.8 : singleTotalLength > 80 ? 0.92 : 1.05;
+  let singleScale = singleTotalLength > 350 ? 0.55 : singleTotalLength > 280 ? 0.65 : singleTotalLength > 160 ? 0.8 : singleTotalLength > 80 ? 0.92 : 1.05;
+  if (userBaseRem > 5.5 && singleTotalLength > 200) {
+    singleScale = singleScale * (5.5 / userBaseRem);
+  }
   const singleFontSize = `calc(${userBaseRem * singleScale}vw)`;
 
   // Scripture Reference styling
@@ -187,47 +231,14 @@ export default function AudienceDisplayLayout(): React.JSX.Element {
   const refStyle = theme?.config.typography.referenceStyle || 'normal';
   const refDec = theme?.config.typography.referenceDecoration || 'none';
 
-  // Version Tag typography styling from theme
+  // Version Tag typography styling from theme (customizable for both translations)
   const showVersion = theme?.config.typography.showVersion !== false;
-  const versionFormat = theme?.config.typography.versionBadgeFormat || 'parentheses';
-  const versionColor = theme?.config.typography.versionColor || '#94A3B8';
-  const versionFontSize = `calc(${(theme?.config.typography.versionFontSizeRem ?? 1.1) * 1.25}vw)`;
-  const versionWeight = theme?.config.typography.versionWeight ?? 600;
-  const versionStyle = theme?.config.typography.versionStyle || 'normal';
-
-  const formatVersionTag = (abbr: string) => {
-    if (versionFormat === 'brackets') return `[${abbr}]`;
-    if (versionFormat === 'pill' || versionFormat === 'plain') return abbr;
-    return `(${abbr})`;
-  };
-
-  const renderVersionBadge = (abbr: string) => {
-    if (!showVersion) return null;
-    return (
-      <span
-        style={{
-          marginLeft: '0.4em',
-          fontSize: versionFontSize,
-          color: versionColor,
-          fontWeight: versionWeight,
-          fontStyle: versionStyle,
-          display: 'inline-block',
-          verticalAlign: 'middle',
-          letterSpacing: '0.04em',
-          ...(versionFormat === 'pill'
-            ? {
-                backgroundColor: 'rgba(255, 255, 255, 0.16)',
-                padding: '0.1em 0.55em',
-                borderRadius: '999px',
-                border: '1px solid rgba(255, 255, 255, 0.28)',
-              }
-            : {}),
-        }}
-      >
-        {formatVersionTag(abbr)}
-      </span>
-    );
-  };
+  const primaryVersionColor = theme?.config.typography.versionColor || '#94A3B8';
+  const secondaryVersionColor = theme?.config.typography.secondaryVersionColor || '#F59E0B';
+  const primaryVersionWeight = theme?.config.typography.versionWeight ?? 600;
+  const secondaryVersionWeight = theme?.config.typography.secondaryVersionWeight ?? primaryVersionWeight;
+  const primaryVersionStyle = theme?.config.typography.versionStyle || 'normal';
+  const secondaryVersionStyle = theme?.config.typography.secondaryVersionStyle || primaryVersionStyle;
 
   const renderReferenceTitle = () => {
     if (refPosition === 'hidden') return null;
@@ -249,7 +260,6 @@ export default function AudienceDisplayLayout(): React.JSX.Element {
         }}
       >
         <span>{slide.referenceDisplay}</span>
-        {renderVersionBadge(slide.versionAbbreviation)}
       </h1>
     );
   };
@@ -317,41 +327,36 @@ export default function AudienceDisplayLayout(): React.JSX.Element {
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
-                  alignItems: 'center',
+                  alignItems:
+                    theme?.config.typography.alignment === 'left'
+                      ? 'flex-start'
+                      : theme?.config.typography.alignment === 'right'
+                      ? 'flex-end'
+                      : theme?.config.typography.alignment === 'justify'
+                      ? 'stretch'
+                      : 'center',
                   backgroundColor: idx === 0 ? 'rgba(255, 255, 255, 0.05)' : 'rgba(245, 158, 11, 0.08)',
                   padding: slotPadding,
                   borderRadius: '10px',
                   border: idx === 0 ? '1px solid rgba(255, 255, 255, 0.14)' : '1px solid rgba(245, 158, 11, 0.3)',
                   boxShadow: '0 4px 16px rgba(0, 0, 0, 0.35)',
                   boxSizing: 'border-box',
+                  width: '100%',
                 }}
               >
                 {showVersion && (
                   <div
                     style={{
                       fontSize: `calc(${(theme?.config.typography.versionFontSizeRem ?? 1.1) * 1.05}vw)`,
-                      fontWeight: versionWeight,
-                      color: versionColor || (idx === 0 ? '#94A3B8' : '#F59E0B'),
-                      fontStyle: versionStyle,
+                      fontWeight: idx === 0 ? primaryVersionWeight : secondaryVersionWeight,
+                      color: idx === 0 ? primaryVersionColor : secondaryVersionColor,
+                      fontStyle: idx === 0 ? primaryVersionStyle : secondaryVersionStyle,
                       marginBottom: '0.3vh',
                       letterSpacing: '0.06em',
                       textTransform: 'uppercase',
-                      ...(versionFormat === 'pill'
-                        ? {
-                            backgroundColor: 'rgba(255, 255, 255, 0.14)',
-                            padding: '2px 10px',
-                            borderRadius: '999px',
-                            border: '1px solid rgba(255, 255, 255, 0.25)',
-                            display: 'inline-block',
-                          }
-                        : {}),
                     }}
                   >
-                    {versionFormat === 'brackets'
-                      ? `[${slot.versionAbbreviation}] — ${slot.versionName}`
-                      : versionFormat === 'plain' || versionFormat === 'pill'
-                      ? `${slot.versionAbbreviation} — ${slot.versionName}`
-                      : `(${slot.versionAbbreviation}) — ${slot.versionName}`}
+                    {slot.versionName}
                   </div>
                 )}
                 <div
@@ -368,9 +373,11 @@ export default function AudienceDisplayLayout(): React.JSX.Element {
                     WebkitTextStroke: strokeVal,
                     fontFamily: theme?.config.typography.fontFamily || 'Segoe UI, Arial, sans-serif',
                     wordBreak: 'break-word',
+                    textAlign: (theme?.config.typography.alignment as any) || 'center',
+                    width: '100%',
                   }}
                 >
-                  {slot.text}
+                  {cleanScriptureText(slot.text)}
                 </div>
               </div>
             ))}
@@ -409,7 +416,7 @@ export default function AudienceDisplayLayout(): React.JSX.Element {
                     {v.verseNumber}
                   </sup>
                 )}
-                {v.text}{' '}
+                {cleanScriptureText(v.text)}{' '}
               </span>
             ))}
           </div>

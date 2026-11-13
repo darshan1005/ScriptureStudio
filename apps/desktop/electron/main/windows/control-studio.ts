@@ -1,7 +1,24 @@
 import { BrowserWindow, app } from 'electron';
 import path from 'path';
+import fs from 'fs';
 
 let controlStudioWindow: BrowserWindow | null = null;
+
+export function getAppIconPath(): string | undefined {
+  const candidates = [
+    path.join(__dirname, '../../resources/icon.ico'),
+    path.join(__dirname, '../../resources/icon.png'),
+    path.join(process.resourcesPath, 'resources/icon.ico'),
+    path.join(process.resourcesPath, 'resources/icon.png'),
+    path.join(process.resourcesPath, 'icon.ico'),
+    path.join(app.getAppPath(), 'resources/icon.ico'),
+    path.join(app.getAppPath(), 'resources/icon.png'),
+  ];
+  for (const p of candidates) {
+    if (fs.existsSync(p)) return p;
+  }
+  return undefined;
+}
 
 export function createControlStudioWindow(): BrowserWindow {
   const isDev = !app.isPackaged;
@@ -14,6 +31,7 @@ export function createControlStudioWindow(): BrowserWindow {
     minHeight: 700,
     backgroundColor: '#070D18',
     show: false,
+    icon: getAppIconPath(),
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,

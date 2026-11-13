@@ -214,6 +214,9 @@ export interface ScriptureStudioApi {
     setTheme?(themeId: string): Promise<PresentationActionResponse>;
     next(): Promise<PresentationActionResponse>;
     prev(): Promise<PresentationActionResponse>;
+    capturePreview?(options?: { width?: number; height?: number } | { x?: number; y?: number; width?: number; height?: number }): Promise<{ success: boolean; dataUrl?: string; error?: string }>;
+    savePreviewImage?(req: { dataUrl: string; defaultFilename?: string }): Promise<{ success: boolean; filePath?: string; filename?: string; canceled?: boolean; error?: string }>;
+    showItemInFolder?(filePath: string): Promise<void>;
     onStateChanged(callback: (state: PresentationStateDto) => void): () => void;
   };
   display: {

@@ -67,7 +67,7 @@ export default function ControlStudioLayout(): React.JSX.Element {
     setPrimaryVersionId(newPrim);
     try {
       localStorage.setItem('scripture_studio_primary_version', newPrim);
-    } catch {}
+    } catch { }
 
     if (state?.previewSlide?.reference && window.scriptureStudioApi) {
       const ref = state.previewSlide.reference;
@@ -88,7 +88,7 @@ export default function ControlStudioLayout(): React.JSX.Element {
     setSecondaryVersionId(newSec);
     try {
       localStorage.setItem('scripture_studio_secondary_version', newSec);
-    } catch {}
+    } catch { }
 
     if (state?.previewSlide?.reference && window.scriptureStudioApi) {
       const ref = state.previewSlide.reference;
@@ -114,7 +114,7 @@ export default function ControlStudioLayout(): React.JSX.Element {
     try {
       localStorage.setItem('scripture_studio_primary_version', oldSec);
       localStorage.setItem('scripture_studio_secondary_version', oldPrim);
-    } catch {}
+    } catch { }
 
     if (state?.previewSlide?.reference && window.scriptureStudioApi) {
       const ref = state.previewSlide.reference;
@@ -143,7 +143,7 @@ export default function ControlStudioLayout(): React.JSX.Element {
       const next = !prev;
       try {
         localStorage.setItem('scripture_studio_nav_collapsed', String(next));
-      } catch {}
+      } catch { }
       return next;
     });
   };
@@ -540,8 +540,8 @@ export default function ControlStudioLayout(): React.JSX.Element {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.1rem', fontWeight: 800, color: '#F1F5F9' }}>
-            <MaterialIcon name="menu_book" size={22} color="#10B981" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '1.1rem', fontWeight: 800, color: '#F1F5F9' }}>
+            <img src="./icon.png" alt="Scripture Studio" style={{ width: '26px', height: '26px', borderRadius: '5px', objectFit: 'contain' }} />
             <span>SCRIPTURE STUDIO</span>
           </div>
           <span className="badge badge-idle" style={{ fontSize: '0.7rem' }}>
@@ -790,8 +790,8 @@ export default function ControlStudioLayout(): React.JSX.Element {
                       ? '3px solid var(--primary)'
                       : '3px solid transparent'
                     : isActive
-                    ? '3px solid var(--primary)'
-                    : '3px solid transparent',
+                      ? '3px solid var(--primary)'
+                      : '3px solid transparent',
                   color: isActive ? '#FFFFFF' : 'var(--text-dim)',
                   transition: 'all 0.15s ease',
                   boxSizing: 'border-box',
@@ -866,8 +866,8 @@ export default function ControlStudioLayout(): React.JSX.Element {
                 state?.liveSlide
                   ? state.liveSlide.verses[0]?.verseNumber
                   : state?.previewSlide
-                  ? state.previewSlide.verses[0]?.verseNumber
-                  : null
+                    ? state.previewSlide.verses[0]?.verseNumber
+                    : null
               }
             />
           </div>
@@ -899,6 +899,9 @@ export default function ControlStudioLayout(): React.JSX.Element {
               onThemeUpdated={(t) => {
                 setActiveTheme(t);
               }}
+              primaryVersionId={primaryVersionId}
+              secondaryVersionId={secondaryVersionId}
+              versions={versions}
             />
           </div>
 
@@ -936,6 +939,8 @@ export default function ControlStudioLayout(): React.JSX.Element {
             onTakeLive={handleTakeLive}
             onNextVerse={handleNextVerse}
             onPrevVerse={handlePrevVerse}
+            onFreezeToggle={handleFreezeToggle}
+            onHideToggle={handleHideToggle}
           />
         </section>
       </div>
@@ -943,8 +948,6 @@ export default function ControlStudioLayout(): React.JSX.Element {
       {/* Bottom Transport Bar */}
       <TransportBar
         state={state}
-        onFreezeToggle={handleFreezeToggle}
-        onHideToggle={handleHideToggle}
       />
 
       {/* In-App Translation Downloader Modal */}
