@@ -1,7 +1,8 @@
-# Scripture Studio
+# Scripture Studio 
 
 > **An independent, modern, offline-first church presentation and scripture projection desktop application for Windows.**
 
+![alt text](ss-logo-removebg-preview.png)
 ---
 
 ## Overview
@@ -15,6 +16,8 @@
 - **Deterministic Presentation Pipeline:** Independent Preview and Live outputs with discrete Freeze, Hide, Clear, and AutoPlay controls.
 - **Multi-Display & Stage Display:** Simultaneous management of Control Studio, Audience Projector, and Stage Confidence Monitor with private speaker notes.
 - **Streaming Ready:** Real-time atomic XML and PNG disk export plus native NewTek NDI video streaming adapter.
+
+![alt text](image.png)
 
 ---
 
