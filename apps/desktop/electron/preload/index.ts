@@ -115,6 +115,19 @@ const api: ScriptureStudioApi = {
     getStatus: () => ipcRenderer.invoke('streaming:get-status'),
     toggleNdi: (enabled: boolean) => ipcRenderer.invoke('streaming:toggle-ndi', enabled),
   },
+  help: {
+    openExternal: (url: string) => ipcRenderer.invoke('app:open-external', url),
+    getAppVersion: () => ipcRenderer.invoke('app:get-version'),
+    onOpenHelp: (callback: (tab: 'guide' | 'bug' | 'enhancement' | 'qa') => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, tab: 'guide' | 'bug' | 'enhancement' | 'qa') => {
+        callback(tab);
+      };
+      ipcRenderer.on('help:open-tab', listener);
+      return () => {
+        ipcRenderer.removeListener('help:open-tab', listener);
+      };
+    },
+  },
 };
 
 contextBridge.exposeInMainWorld('scriptureStudioApi', api);

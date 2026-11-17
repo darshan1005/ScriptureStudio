@@ -1,4 +1,4 @@
-import { ipcMain } from 'electron';
+import { ipcMain, app, shell } from 'electron';
 import { DatabaseClient, ThemeRepository, ProgramRepository, HistoryRepository } from '@scripture-studio/database';
 import { ScriptureSearchService } from '@scripture-studio/scripture-search';
 import { registerBibleIpcHandlers } from './bible-handlers.js';
@@ -82,6 +82,24 @@ export function registerAllIpcHandlers(dbClient: DatabaseClient): PresentationCo
     lastFrameTimestamp: Date.now(),
   }));
   ipcMain.handle('streaming:toggle-ndi', () => {});
+
+  // 9. App & External link handlers
+  ipcMain.handle('app:open-external', async (_e, url: string) => {
+    if (url && (url.startsWith('https://') || url.startsWith('http://') || url.startsWith('mailto:'))) {
+      try {
+        await shell.openExternal(url);
+        return true;
+      } catch (err) {
+        logger.error('Failed to open external URL:', err);
+        return false;
+      }
+    }
+    return false;
+  });
+
+  ipcMain.handle('app:get-version', () => {
+    return app.getVersion();
+  });
 
   logger.info('All IPC channel handlers successfully registered.');
   return presentationController;

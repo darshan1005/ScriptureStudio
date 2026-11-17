@@ -15,6 +15,7 @@ import { ProgramEditorWorkspace } from '../components/ProgramEditorWorkspace.js'
 import { ThemeEditorWorkspace } from '../components/ThemeEditorWorkspace.js';
 import { HistoryWorkspace } from '../components/HistoryWorkspace.js';
 import { TranslationDownloaderModal } from '../components/TranslationDownloaderModal.js';
+import { HelpSupportModal, HelpModalTab } from '../components/HelpSupportModal.js';
 import PreviewPane from '../components/PreviewPane.js';
 import TransportBar from '../components/TransportBar.js';
 import { MaterialIcon } from '../components/MaterialIcon.js';
@@ -23,6 +24,8 @@ type SidebarTab = 'bible' | 'search' | 'programs' | 'themes' | 'history';
 
 export default function ControlStudioLayout(): React.JSX.Element {
   const [activeTab, setActiveTab] = useState<SidebarTab>('bible');
+  const [isHelpOpen, setIsHelpOpen] = useState<boolean>(false);
+  const [helpTab, setHelpTab] = useState<HelpModalTab>('guide');
   const [readerNavReference, setReaderNavReference] = useState<ScriptureReference | null>(null);
   const [state, setState] = useState<PresentationStateDto | null>(null);
   const [themes, setThemes] = useState<ThemeDto[]>([]);
@@ -241,10 +244,20 @@ export default function ControlStudioLayout(): React.JSX.Element {
         });
       }
 
+      // Listen for application menu Help actions
+      let unsubHelp: (() => void) | undefined;
+      if (window.scriptureStudioApi?.help?.onOpenHelp) {
+        unsubHelp = window.scriptureStudioApi.help.onOpenHelp((tab) => {
+          setHelpTab(tab || 'guide');
+          setIsHelpOpen(true);
+        });
+      }
+
       return () => {
         unsubscribe();
         unsubOutput?.();
         unsubTopology?.();
+        unsubHelp?.();
       };
     }
     return undefined;
@@ -297,6 +310,10 @@ export default function ControlStudioLayout(): React.JSX.Element {
       } else if (e.key === 'F11') {
         e.preventDefault();
         handleClear();
+      } else if (e.key === 'F1') {
+        e.preventDefault();
+        setHelpTab('guide');
+        setIsHelpOpen(true);
       }
     };
 
@@ -618,6 +635,19 @@ export default function ControlStudioLayout(): React.JSX.Element {
           >
             <MaterialIcon name="download" size={17} />
             <span>Download Bibles</span>
+          </button>
+
+          <button
+            className="btn-secondary"
+            onClick={() => {
+              setHelpTab('guide');
+              setIsHelpOpen(true);
+            }}
+            title="Help & Support (F1): User Guide, Bug Reports, Feature Enhancements, Q&A"
+            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600 }}
+          >
+            <MaterialIcon name="help" size={17} color="#38BDF8" />
+            <span>Help</span>
           </button>
 
           <button
@@ -1000,6 +1030,17 @@ export default function ControlStudioLayout(): React.JSX.Element {
         isOpen={isDownloaderOpen}
         onClose={() => setIsDownloaderOpen(false)}
         onDownloaded={handleReload}
+      />
+
+      {/* In-App Help & Support Modal */}
+      <HelpSupportModal
+        isOpen={isHelpOpen}
+        onClose={() => setIsHelpOpen(false)}
+        initialTab={helpTab}
+        displaysCount={displays.length}
+        primaryVersion={versions.find((v) => v.id === primaryVersionId)?.abbreviation || primaryVersionId}
+        secondaryVersion={versions.find((v) => v.id === secondaryVersionId)?.abbreviation || secondaryVersionId}
+        activeThemeName={activeTheme?.name}
       />
     </div>
   );

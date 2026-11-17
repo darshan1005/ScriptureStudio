@@ -247,6 +247,11 @@ export interface ScriptureStudioApi {
     getStatus(): Promise<StreamingStatusDto>;
     toggleNdi(enabled: boolean): Promise<void>;
   };
+  help?: {
+    openExternal(url: string): Promise<boolean>;
+    getAppVersion(): Promise<string>;
+    onOpenHelp?(callback: (tab: 'guide' | 'bug' | 'enhancement' | 'qa') => void): () => void;
+  };
 }
 
 declare global {

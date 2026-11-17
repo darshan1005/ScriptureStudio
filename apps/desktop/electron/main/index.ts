@@ -5,6 +5,7 @@ import { DatabaseClient } from '@scripture-studio/database';
 import { createLogger } from '@scripture-studio/logger';
 import { createControlStudioWindow, getControlStudioWindow } from './windows/control-studio.js';
 import { registerAllIpcHandlers } from './ipc/index.js';
+import { setupApplicationMenu } from './menu.js';
 
 const logger = createLogger('ElectronMain');
 
@@ -73,6 +74,9 @@ async function initializeApp(): Promise<void> {
 
   // Register IPC channel handlers
   registerAllIpcHandlers(dbClient);
+
+  // Setup Application Menu (Help, Guide, Bug Report, Enhancements, Q&A)
+  setupApplicationMenu();
 
   // Create primary Control Studio operator window
   createControlStudioWindow();
