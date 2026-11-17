@@ -113,6 +113,6 @@ scripture-studio/
 Scripture Studio is developed as an independent, clean-room software application. It contains no proprietary code, binary assets, or closed modules from BibleShow or any third-party commercial presentation software. All Bible datasets utilized in automated testing and sample packaging are public domain or openly licensed with verified attribution.
 
 ## Other Logos
-![Alternative Logo](logo-2.png)
+![Alternative Logo](Logo-2.png)
 
-![Alternative Logo](logo-3.png)
+![Alternative Logo](Logo-3.png)
