@@ -5,6 +5,7 @@ import {
   BibleVerseDto,
   BibleVersionDto,
 } from '@scripture-studio/shared-types';
+import { findCanonicalBook } from '@scripture-studio/bible-engine';
 
 export class BibleRepository {
   constructor(private db: Database.Database) {}
@@ -54,14 +55,25 @@ export class BibleRepository {
     bookId: string,
     chapterNumber: number
   ): { book: BibleBookDto; chapter: BibleChapterDto; verses: BibleVerseDto[] } | null {
-    const cleanAbbr = bookId.includes('_') ? bookId.split('_')[1]!.toLowerCase() : bookId.toLowerCase();
+    const cleanAbbr = bookId.includes('_') ? bookId.split('_').slice(1).join('_').toLowerCase() : bookId.toLowerCase();
     const targetBookId = `${versionId.toLowerCase()}_${cleanAbbr}`;
 
-    const bookRow = this.db.prepare(`
+    let bookRow = this.db.prepare(`
       SELECT id, version_id, book_order, testament, name, abbreviation, chapter_count
       FROM bible_books
-      WHERE version_id = ? AND (id = ? OR id = ? OR LOWER(abbreviation) = ?)
-    `).get(versionId, bookId, targetBookId, cleanAbbr) as any;
+      WHERE version_id = ? AND (id = ? OR id = ? OR LOWER(abbreviation) = ? OR LOWER(name) = ?)
+    `).get(versionId, bookId, targetBookId, cleanAbbr, cleanAbbr) as any;
+
+    if (!bookRow) {
+      const canonical = findCanonicalBook(cleanAbbr) || findCanonicalBook(bookId);
+      if (canonical) {
+        bookRow = this.db.prepare(`
+          SELECT id, version_id, book_order, testament, name, abbreviation, chapter_count
+          FROM bible_books
+          WHERE version_id = ? AND (book_order = ? OR LOWER(name) = ? OR LOWER(abbreviation) = ?)
+        `).get(versionId, canonical.order, canonical.name.toLowerCase(), canonical.abbreviation.toLowerCase()) as any;
+      }
+    }
 
     if (!bookRow) return null;
 

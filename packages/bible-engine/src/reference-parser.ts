@@ -2,7 +2,13 @@ import { ParsedReferenceResult, ScriptureReference } from '@scripture-studio/sha
 import { CANONICAL_BOOKS, CanonicalBookDefinition } from './canonical-books.js';
 
 export function findCanonicalBook(inputName: string): CanonicalBookDefinition | null {
-  const clean = inputName.trim().toLowerCase().replace(/\./g, '');
+  if (!inputName || typeof inputName !== 'string') return null;
+  let clean = inputName.trim().toLowerCase().replace(/\./g, '');
+
+  // Strip version prefixes if present (e.g. 'kjv_jhn' -> 'jhn', 'niv_psa' -> 'psa')
+  if (clean.includes('_')) {
+    clean = clean.split('_').slice(1).join('_').toLowerCase();
+  }
 
   for (const book of CANONICAL_BOOKS) {
     if (book.name.toLowerCase() === clean) return book;

@@ -5,6 +5,7 @@ import {
   PresentationHistoryEntryDto,
   PresentationStateDto,
   ProgramItemDto,
+  ScriptureReference,
   SearchFullTextResultItem,
   ThemeDto,
 } from '@scripture-studio/shared-types';
@@ -22,6 +23,7 @@ type SidebarTab = 'bible' | 'search' | 'programs' | 'themes' | 'history';
 
 export default function ControlStudioLayout(): React.JSX.Element {
   const [activeTab, setActiveTab] = useState<SidebarTab>('bible');
+  const [readerNavReference, setReaderNavReference] = useState<ScriptureReference | null>(null);
   const [state, setState] = useState<PresentationStateDto | null>(null);
   const [themes, setThemes] = useState<ThemeDto[]>([]);
   const [activeTheme, setActiveTheme] = useState<ThemeDto | null>(null);
@@ -374,46 +376,76 @@ export default function ControlStudioLayout(): React.JSX.Element {
     }
   };
 
-  const handleStageProgramItem = (item: ProgramItemDto, secVer?: string) => {
-    if (item.reference && window.scriptureStudioApi) {
-      const effectiveSec = secVer !== undefined ? (secVer || undefined) : item.reference.secondaryVersionId || (secondaryVersionId || undefined);
+  const handleStageProgramItem = (item: ProgramItemDto, secVer?: string, verseNum?: number) => {
+    const ref = item.reference;
+    if (ref && window.scriptureStudioApi) {
+      const effectiveSec = secVer !== undefined ? (secVer || undefined) : ref.secondaryVersionId || (secondaryVersionId || undefined);
+      const chosenVer = ref.versionId && versions.some((v) => v.id === ref.versionId)
+        ? ref.versionId
+        : (primaryVersionId || 'kjv');
+
+      const targetVerse = verseNum ?? ref.startVerse;
+
       window.scriptureStudioApi.presentation.previewReference({
-        versionId: item.reference.versionId || 'kjv',
+        versionId: chosenVer,
         secondaryVersionId: effectiveSec,
-        bookId: item.reference.bookId,
-        chapterNumber: item.reference.chapterNumber,
-        startVerse: item.reference.startVerse,
-        endVerse: item.reference.endVerse,
+        bookId: ref.bookId,
+        bookName: ref.bookName,
+        chapterNumber: ref.chapterNumber,
+        startVerse: targetVerse,
+        endVerse: targetVerse,
         themeId: activeTheme?.id,
       });
     }
   };
 
-  const handleTakeLiveProgramItem = async (item: ProgramItemDto, secVer?: string) => {
-    if (item.reference && window.scriptureStudioApi) {
-      const effectiveSec = secVer !== undefined ? (secVer || undefined) : item.reference.secondaryVersionId || (secondaryVersionId || undefined);
-      await window.scriptureStudioApi.presentation.previewReference({
-        versionId: item.reference.versionId || 'kjv',
+  const handleTakeLiveProgramItem = async (item: ProgramItemDto, secVer?: string, verseNum?: number) => {
+    const ref = item.reference;
+    if (ref && window.scriptureStudioApi) {
+      const effectiveSec = secVer !== undefined ? (secVer || undefined) : ref.secondaryVersionId || (secondaryVersionId || undefined);
+      const chosenVer = ref.versionId && versions.some((v) => v.id === ref.versionId)
+        ? ref.versionId
+        : (primaryVersionId || 'kjv');
+
+      const targetVerse = verseNum ?? ref.startVerse;
+
+      const res = await window.scriptureStudioApi.presentation.previewReference({
+        versionId: chosenVer,
         secondaryVersionId: effectiveSec,
-        bookId: item.reference.bookId,
-        chapterNumber: item.reference.chapterNumber,
-        startVerse: item.reference.startVerse,
-        endVerse: item.reference.endVerse,
+        bookId: ref.bookId,
+        bookName: ref.bookName,
+        chapterNumber: ref.chapterNumber,
+        startVerse: targetVerse,
+        endVerse: targetVerse,
         themeId: activeTheme?.id,
       });
-      await window.scriptureStudioApi.display.openOutputs();
-      await window.scriptureStudioApi.presentation.takeLive();
-      setIsOutputOpen(true);
+      if (res?.success) {
+        await window.scriptureStudioApi.display.openOutputs();
+        await window.scriptureStudioApi.presentation.takeLive();
+        setIsOutputOpen(true);
+      }
     }
+  };
+
+  const handleOpenInReader = (ref: ScriptureReference) => {
+    setReaderNavReference(ref);
+    if (ref.versionId && versions.some((v) => v.id === ref.versionId)) {
+      setPrimaryVersionId(ref.versionId);
+    }
+    if (ref.secondaryVersionId !== undefined) {
+      setSecondaryVersionId(ref.secondaryVersionId || '');
+    }
+    setActiveTab('bible');
   };
 
   const handleRecallPreview = (entry: PresentationHistoryEntryDto, secVer?: string) => {
     if (window.scriptureStudioApi) {
       const effectiveSec = secVer !== undefined ? (secVer || undefined) : entry.reference.secondaryVersionId || (secondaryVersionId || undefined);
       window.scriptureStudioApi.presentation.previewReference({
-        versionId: entry.translationId || entry.reference.versionId || 'kjv',
+        versionId: entry.translationId || entry.reference.versionId || primaryVersionId || 'kjv',
         secondaryVersionId: effectiveSec,
         bookId: entry.reference.bookId,
+        bookName: entry.reference.bookName,
         chapterNumber: entry.reference.chapterNumber,
         startVerse: entry.reference.startVerse,
         endVerse: entry.reference.endVerse,
@@ -425,18 +457,21 @@ export default function ControlStudioLayout(): React.JSX.Element {
   const handleRecallLive = async (entry: PresentationHistoryEntryDto, secVer?: string) => {
     if (window.scriptureStudioApi) {
       const effectiveSec = secVer !== undefined ? (secVer || undefined) : entry.reference.secondaryVersionId || (secondaryVersionId || undefined);
-      await window.scriptureStudioApi.presentation.previewReference({
-        versionId: entry.translationId || entry.reference.versionId || 'kjv',
+      const res = await window.scriptureStudioApi.presentation.previewReference({
+        versionId: entry.translationId || entry.reference.versionId || primaryVersionId || 'kjv',
         secondaryVersionId: effectiveSec,
         bookId: entry.reference.bookId,
+        bookName: entry.reference.bookName,
         chapterNumber: entry.reference.chapterNumber,
         startVerse: entry.reference.startVerse,
         endVerse: entry.reference.endVerse,
         themeId: activeTheme?.id,
       });
-      await window.scriptureStudioApi.display.openOutputs();
-      await window.scriptureStudioApi.presentation.takeLive();
-      setIsOutputOpen(true);
+      if (res?.success) {
+        await window.scriptureStudioApi.display.openOutputs();
+        await window.scriptureStudioApi.presentation.takeLive();
+        setIsOutputOpen(true);
+      }
     }
   };
 
@@ -859,15 +894,23 @@ export default function ControlStudioLayout(): React.JSX.Element {
               onPrimaryVersionChange={handlePrimaryVersionChange}
               secondaryVersionId={secondaryVersionId}
               onSecondaryVersionChange={handleSecondaryVersionChange}
-              onSelectVerse={handleSelectVerse}
-              onDoubleSelectVerse={handleDoubleSelectVerse}
-              activeReference={state?.liveSlide?.reference || state?.previewSlide?.reference}
+              onSelectVerse={(vId, bId, ch, v, sec) => {
+                setReaderNavReference(null);
+                handleSelectVerse(vId, bId, ch, v, sec);
+              }}
+              onDoubleSelectVerse={(vId, bId, ch, v, sec) => {
+                setReaderNavReference(null);
+                handleDoubleSelectVerse(vId, bId, ch, v, sec);
+              }}
+              activeReference={readerNavReference || state?.liveSlide?.reference || state?.previewSlide?.reference}
               activeVerseNumber={
-                state?.liveSlide
-                  ? state.liveSlide.verses[0]?.verseNumber
-                  : state?.previewSlide
-                    ? state.previewSlide.verses[0]?.verseNumber
-                    : null
+                readerNavReference
+                  ? readerNavReference.startVerse
+                  : state?.liveSlide
+                    ? state.liveSlide.verses[0]?.verseNumber
+                    : state?.previewSlide
+                      ? state.previewSlide.verses[0]?.verseNumber
+                      : null
               }
             />
           </div>
@@ -891,6 +934,8 @@ export default function ControlStudioLayout(): React.JSX.Element {
               onSecondaryVersionChange={handleSecondaryVersionChange}
               onStageItem={handleStageProgramItem}
               onTakeLiveItem={handleTakeLiveProgramItem}
+              onOpenInReader={handleOpenInReader}
+              presentationState={state}
             />
           </div>
 

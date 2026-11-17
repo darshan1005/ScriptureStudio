@@ -1,0 +1,734 @@
+{
+  "apps/desktop/electron-builder.json": {
+    "mtime": 1794543722.3711658,
+    "seen": 1794844273.0994322,
+    "ast_hash": "bf18b553639b85b24ff92f94c40bfabd",
+    "semantic_hash": "bf18b553639b85b24ff92f94c40bfabd"
+  },
+  "apps/desktop/electron/main/index.ts": {
+    "mtime": 1794493247.807638,
+    "seen": 1794844273.0994322,
+    "ast_hash": "8d045563605b1f38b848cae388e70fcc",
+    "semantic_hash": "8d045563605b1f38b848cae388e70fcc"
+  },
+  "apps/desktop/electron/main/ipc/bible-handlers.ts": {
+    "mtime": 1794487985.0860665,
+    "seen": 1794844273.0994322,
+    "ast_hash": "60064292655c209e12663c1f85bcb287",
+    "semantic_hash": "60064292655c209e12663c1f85bcb287"
+  },
+  "apps/desktop/electron/main/ipc/display-handlers.ts": {
+    "mtime": 1794490931.3118844,
+    "seen": 1794844273.0994322,
+    "ast_hash": "e7777ae904285cd98d5640c1273ccfaf",
+    "semantic_hash": "e7777ae904285cd98d5640c1273ccfaf"
+  },
+  "apps/desktop/electron/main/ipc/index.ts": {
+    "mtime": 1794491040.1616387,
+    "seen": 1794844273.0994322,
+    "ast_hash": "acf3a8bac9541ca50d848e616efb6f46",
+    "semantic_hash": "acf3a8bac9541ca50d848e616efb6f46"
+  },
+  "apps/desktop/electron/main/ipc/presentation-handlers.ts": {
+    "mtime": 1794840976.3280892,
+    "seen": 1794844273.0994322,
+    "ast_hash": "85e6c3d1b2c9fc89656a74a0ab14aff7",
+    "semantic_hash": "85e6c3d1b2c9fc89656a74a0ab14aff7"
+  },
+  "apps/desktop/electron/main/windows/audience-display.ts": {
+    "mtime": 1794543820.0197308,
+    "seen": 1794844273.0994322,
+    "ast_hash": "14cf7f0cee1bed2ea08ec034aebe4602",
+    "semantic_hash": "14cf7f0cee1bed2ea08ec034aebe4602"
+  },
+  "apps/desktop/electron/main/windows/control-studio.ts": {
+    "mtime": 1794543764.811072,
+    "seen": 1794844273.0994322,
+    "ast_hash": "a01ec16dae46a3cefd47d8bb984957f4",
+    "semantic_hash": "a01ec16dae46a3cefd47d8bb984957f4"
+  },
+  "apps/desktop/electron/main/windows/stage-display.ts": {
+    "mtime": 1794458606.0723064,
+    "seen": 1794844273.0994322,
+    "ast_hash": "997a3b4a78fc0dc7cf676d70882f9269",
+    "semantic_hash": "997a3b4a78fc0dc7cf676d70882f9269"
+  },
+  "apps/desktop/electron/preload/index.ts": {
+    "mtime": 1794553239.7982612,
+    "seen": 1794844273.0994322,
+    "ast_hash": "350f45169bd48b9db1077ceb3d203941",
+    "semantic_hash": "350f45169bd48b9db1077ceb3d203941"
+  },
+  "apps/desktop/package.json": {
+    "mtime": 1794500333.9753065,
+    "seen": 1794844273.0994322,
+    "ast_hash": "3dca4e25ee72d8d277a63482f8f3b814",
+    "semantic_hash": "3dca4e25ee72d8d277a63482f8f3b814"
+  },
+  "apps/desktop/renderer/src/App.tsx": {
+    "mtime": 1794458607.4476874,
+    "seen": 1794844273.0994322,
+    "ast_hash": "adfdff6ce3defbe4769c010a071548ab",
+    "semantic_hash": "adfdff6ce3defbe4769c010a071548ab"
+  },
+  "apps/desktop/renderer/src/components/BibleReaderWorkspace.tsx": {
+    "mtime": 1794842903.1080234,
+    "seen": 1794844273.0994322,
+    "ast_hash": "14864bb6a17c0eb6447e32614bbc59ef",
+    "semantic_hash": "14864bb6a17c0eb6447e32614bbc59ef"
+  },
+  "apps/desktop/renderer/src/components/HistoryWorkspace.tsx": {
+    "mtime": 1794508760.8933866,
+    "seen": 1794844273.0994322,
+    "ast_hash": "c625b799d7d6d1db0eb97e4ba1541642",
+    "semantic_hash": "c625b799d7d6d1db0eb97e4ba1541642"
+  },
+  "apps/desktop/renderer/src/components/MaterialIcon.tsx": {
+    "mtime": 1794509780.5039344,
+    "seen": 1794844273.0994322,
+    "ast_hash": "e230c3381d7add934ee878b933fd926b",
+    "semantic_hash": "e230c3381d7add934ee878b933fd926b"
+  },
+  "apps/desktop/renderer/src/components/PreviewPane.tsx": {
+    "mtime": 1794842542.7680519,
+    "seen": 1794844273.0994322,
+    "ast_hash": "f1104270e32a8072aebe76e297299133",
+    "semantic_hash": "f1104270e32a8072aebe76e297299133"
+  },
+  "apps/desktop/renderer/src/components/ProgramEditorWorkspace.tsx": {
+    "mtime": 1794843570.290941,
+    "seen": 1794844273.0994322,
+    "ast_hash": "65d264e89972e60f33f11cc0dc84e047",
+    "semantic_hash": "65d264e89972e60f33f11cc0dc84e047"
+  },
+  "apps/desktop/renderer/src/components/SearchWorkspace.tsx": {
+    "mtime": 1794552471.9634588,
+    "seen": 1794844273.0994322,
+    "ast_hash": "003d14475d1f9e3b56a72cc629a7a78d",
+    "semantic_hash": "003d14475d1f9e3b56a72cc629a7a78d"
+  },
+  "apps/desktop/renderer/src/components/ThemeEditorWorkspace.tsx": {
+    "mtime": 1794842542.945149,
+    "seen": 1794844273.0994322,
+    "ast_hash": "d876284738b39f40c78a0985a279e7eb",
+    "semantic_hash": "d876284738b39f40c78a0985a279e7eb"
+  },
+  "apps/desktop/renderer/src/components/TranslationDownloaderModal.tsx": {
+    "mtime": 1794509592.878638,
+    "seen": 1794844273.0994322,
+    "ast_hash": "eecf19bbb886176452c3c0305ee19ac9",
+    "semantic_hash": "eecf19bbb886176452c3c0305ee19ac9"
+  },
+  "apps/desktop/renderer/src/components/TransportBar.tsx": {
+    "mtime": 1794559762.9697764,
+    "seen": 1794844273.0994322,
+    "ast_hash": "685dceda9223444c9caafb9049982018",
+    "semantic_hash": "685dceda9223444c9caafb9049982018"
+  },
+  "apps/desktop/renderer/src/layouts/AudienceDisplayLayout.tsx": {
+    "mtime": 1794558403.3767817,
+    "seen": 1794844273.0994322,
+    "ast_hash": "e89d06f4c90b50a37b644c522e144172",
+    "semantic_hash": "e89d06f4c90b50a37b644c522e144172"
+  },
+  "apps/desktop/renderer/src/layouts/ControlStudioLayout.tsx": {
+    "mtime": 1794843428.4242272,
+    "seen": 1794844273.0994322,
+    "ast_hash": "63102ca2cb1f04992faa95eddda8ba00",
+    "semantic_hash": "63102ca2cb1f04992faa95eddda8ba00"
+  },
+  "apps/desktop/renderer/src/layouts/StageDisplayLayout.tsx": {
+    "mtime": 1794458607.9687083,
+    "seen": 1794844273.0994322,
+    "ast_hash": "a0edea8ea4f12f9de11d57e0f59fc5d0",
+    "semantic_hash": "a0edea8ea4f12f9de11d57e0f59fc5d0"
+  },
+  "apps/desktop/renderer/src/main.tsx": {
+    "mtime": 1794458608.107262,
+    "seen": 1794844273.0994322,
+    "ast_hash": "ff9f96306bef2b6d792a11421882390d",
+    "semantic_hash": "ff9f96306bef2b6d792a11421882390d"
+  },
+  "apps/desktop/resources/kjv-full.json": {
+    "mtime": 1794465658.8590631,
+    "seen": 1794844273.0994322,
+    "ast_hash": "e3d859f1c0971810dddc9b3289610639",
+    "semantic_hash": "e3d859f1c0971810dddc9b3289610639"
+  },
+  "apps/desktop/resources/telugu-bible.json": {
+    "mtime": 1794469346.2376518,
+    "seen": 1794844273.0994322,
+    "ast_hash": "1f08d1d84368fc7eccdc2a294d3643bf",
+    "semantic_hash": "1f08d1d84368fc7eccdc2a294d3643bf"
+  },
+  "apps/desktop/tsconfig.json": {
+    "mtime": 1794458608.6319797,
+    "seen": 1794844273.0994322,
+    "ast_hash": "79a9c1efd185d1ff1d5debca93337233",
+    "semantic_hash": "79a9c1efd185d1ff1d5debca93337233"
+  },
+  "apps/desktop/tsconfig.node.json": {
+    "mtime": 1794462493.4308496,
+    "seen": 1794844273.0994322,
+    "ast_hash": "1da2e21619da73cf905d8a782408ee9d",
+    "semantic_hash": "1da2e21619da73cf905d8a782408ee9d"
+  },
+  "apps/desktop/vite.config.ts": {
+    "mtime": 1794464160.5285976,
+    "seen": 1794844273.0994322,
+    "ast_hash": "b330bb2d461b66e30cf1c676bec2db57",
+    "semantic_hash": "b330bb2d461b66e30cf1c676bec2db57"
+  },
+  "backend/ScriptureStudio.Api/Controllers/SyncController.cs": {
+    "mtime": 1794459400.0423038,
+    "seen": 1794844273.0994322,
+    "ast_hash": "ce0a6f9603e527542df143fc4a6630f5",
+    "semantic_hash": "ce0a6f9603e527542df143fc4a6630f5"
+  },
+  "backend/ScriptureStudio.Api/Program.cs": {
+    "mtime": 1794459400.0911975,
+    "seen": 1794844273.0994322,
+    "ast_hash": "d70947640bf541bf0f3fd977a9719377",
+    "semantic_hash": "d70947640bf541bf0f3fd977a9719377"
+  },
+  "backend/ScriptureStudio.Api/ScriptureStudio.Api.csproj": {
+    "mtime": 1794459400.1346183,
+    "seen": 1794844273.0994322,
+    "ast_hash": "62251a9725f7d15e661c53bb340d0747",
+    "semantic_hash": "62251a9725f7d15e661c53bb340d0747"
+  },
+  "backend/ScriptureStudio.Application/Interfaces/ISyncRepository.cs": {
+    "mtime": 1794460289.014223,
+    "seen": 1794844273.0994322,
+    "ast_hash": "a18dea2844b9c4b887475048a70bf432",
+    "semantic_hash": "a18dea2844b9c4b887475048a70bf432"
+  },
+  "backend/ScriptureStudio.Application/ScriptureStudio.Application.csproj": {
+    "mtime": 1794460289.014223,
+    "seen": 1794844273.0994322,
+    "ast_hash": "6070c019287820a5aa4bbf7a237467a5",
+    "semantic_hash": "6070c019287820a5aa4bbf7a237467a5"
+  },
+  "backend/ScriptureStudio.Domain/Entities/SermonProgram.cs": {
+    "mtime": 1794460289.0152218,
+    "seen": 1794844273.0994322,
+    "ast_hash": "65a7a4d85769be61b60370457e8c083f",
+    "semantic_hash": "65a7a4d85769be61b60370457e8c083f"
+  },
+  "backend/ScriptureStudio.Domain/ScriptureStudio.Domain.csproj": {
+    "mtime": 1794460289.013227,
+    "seen": 1794844273.0994322,
+    "ast_hash": "89992f6314ad356dbd797c0b0d00b19b",
+    "semantic_hash": "89992f6314ad356dbd797c0b0d00b19b"
+  },
+  "package.json": {
+    "mtime": 1794500334.0305882,
+    "seen": 1794844273.0994322,
+    "ast_hash": "f9af776512ae620a136ad609ddb788e6",
+    "semantic_hash": "f9af776512ae620a136ad609ddb788e6"
+  },
+  "packages/bible-engine/package.json": {
+    "mtime": 1794461476.4696014,
+    "seen": 1794844273.0994322,
+    "ast_hash": "d08f55fa969d7db16152ecaa536e0eed",
+    "semantic_hash": "d08f55fa969d7db16152ecaa536e0eed"
+  },
+  "packages/bible-engine/src/canonical-books.json": {
+    "mtime": 1794467069.9778917,
+    "seen": 1794844273.0994322,
+    "ast_hash": "371af603f5dbcb2c3fb2cf5b2cc66ab3",
+    "semantic_hash": "371af603f5dbcb2c3fb2cf5b2cc66ab3"
+  },
+  "packages/bible-engine/src/canonical-books.ts": {
+    "mtime": 1794458982.5887828,
+    "seen": 1794844273.0994322,
+    "ast_hash": "f2aef304f6cfaf330827bdc212ecdc9e",
+    "semantic_hash": "f2aef304f6cfaf330827bdc212ecdc9e"
+  },
+  "packages/bible-engine/src/comparison-engine.ts": {
+    "mtime": 1794458982.5897927,
+    "seen": 1794844273.0994322,
+    "ast_hash": "25f198f242a4c7647325c22af4395a45",
+    "semantic_hash": "25f198f242a4c7647325c22af4395a45"
+  },
+  "packages/bible-engine/src/index.ts": {
+    "mtime": 1794458982.9343772,
+    "seen": 1794844273.0994322,
+    "ast_hash": "b340c3d7316ff768c8be7f969de6e3e2",
+    "semantic_hash": "b340c3d7316ff768c8be7f969de6e3e2"
+  },
+  "packages/bible-engine/src/reference-parser.ts": {
+    "mtime": 1794842868.6576846,
+    "seen": 1794844273.0994322,
+    "ast_hash": "5ca77cdf6617e021fb66fa4ee53e3d66",
+    "semantic_hash": "5ca77cdf6617e021fb66fa4ee53e3d66"
+  },
+  "packages/bible-engine/tsconfig.json": {
+    "mtime": 1794458983.0286202,
+    "seen": 1794844273.0994322,
+    "ast_hash": "2347fcd181f4ca2b992036f5fb82c8eb",
+    "semantic_hash": "2347fcd181f4ca2b992036f5fb82c8eb"
+  },
+  "packages/bible-importer/package.json": {
+    "mtime": 1794461482.2039442,
+    "seen": 1794844273.0994322,
+    "ast_hash": "737ec7fde9772e6fbeb21b17bd2cce92",
+    "semantic_hash": "737ec7fde9772e6fbeb21b17bd2cce92"
+  },
+  "packages/bible-importer/src/downloader.ts": {
+    "mtime": 1794458983.047486,
+    "seen": 1794844273.0994322,
+    "ast_hash": "0e76b2ca9b733546492293c45a10d63e",
+    "semantic_hash": "0e76b2ca9b733546492293c45a10d63e"
+  },
+  "packages/bible-importer/src/index.ts": {
+    "mtime": 1794458983.0515752,
+    "seen": 1794844273.0994322,
+    "ast_hash": "7df351be877cbb4ac02e75aca72b6b15",
+    "semantic_hash": "7df351be877cbb4ac02e75aca72b6b15"
+  },
+  "packages/bible-importer/src/json-importer.ts": {
+    "mtime": 1794458981.980652,
+    "seen": 1794844273.0994322,
+    "ast_hash": "c5fad85da13faedbdd26bb7c36e779b0",
+    "semantic_hash": "c5fad85da13faedbdd26bb7c36e779b0"
+  },
+  "packages/bible-importer/src/zefania-importer.ts": {
+    "mtime": 1794458984.2609785,
+    "seen": 1794844273.0994322,
+    "ast_hash": "91ed0c80f7c2c284a4753eda4a8f5796",
+    "semantic_hash": "91ed0c80f7c2c284a4753eda4a8f5796"
+  },
+  "packages/bible-importer/tsconfig.json": {
+    "mtime": 1794458984.2619836,
+    "seen": 1794844273.0994322,
+    "ast_hash": "9e6f83c96d31d4b889b8262147c0b909",
+    "semantic_hash": "9e6f83c96d31d4b889b8262147c0b909"
+  },
+  "packages/configuration/package.json": {
+    "mtime": 1794461450.6131845,
+    "seen": 1794844273.0994322,
+    "ast_hash": "dcbcb471c41ccd38b02395f99de19eec",
+    "semantic_hash": "dcbcb471c41ccd38b02395f99de19eec"
+  },
+  "packages/configuration/src/index.ts": {
+    "mtime": 1794458609.174827,
+    "seen": 1794844273.0994322,
+    "ast_hash": "9edea2e307a6e0b8a350ed6ad59c8378",
+    "semantic_hash": "9edea2e307a6e0b8a350ed6ad59c8378"
+  },
+  "packages/configuration/tsconfig.json": {
+    "mtime": 1794458609.4391694,
+    "seen": 1794844273.0994322,
+    "ast_hash": "2347fcd181f4ca2b992036f5fb82c8eb",
+    "semantic_hash": "2347fcd181f4ca2b992036f5fb82c8eb"
+  },
+  "packages/database/package.json": {
+    "mtime": 1794840797.948191,
+    "seen": 1794844273.0994322,
+    "ast_hash": "308227a44d942fc08d93406d78543999",
+    "semantic_hash": "308227a44d942fc08d93406d78543999"
+  },
+  "packages/database/src/client.ts": {
+    "mtime": 1794842868.6597872,
+    "seen": 1794844273.0994322,
+    "ast_hash": "9d86084350e6bb62dfa3a43a31ac940e",
+    "semantic_hash": "9d86084350e6bb62dfa3a43a31ac940e"
+  },
+  "packages/database/src/index.ts": {
+    "mtime": 1794458609.6436224,
+    "seen": 1794844273.0994322,
+    "ast_hash": "d52f42c77a02932d70b9dd99a6f53b4d",
+    "semantic_hash": "d52f42c77a02932d70b9dd99a6f53b4d"
+  },
+  "packages/database/src/migrations/001_initial_schema.sql": {
+    "mtime": 1794458609.7092857,
+    "seen": 1794844273.0994322,
+    "ast_hash": "edd54dac11065514c4969b54e1431395",
+    "semantic_hash": "edd54dac11065514c4969b54e1431395"
+  },
+  "packages/database/src/migrations/index.ts": {
+    "mtime": 1794458609.793676,
+    "seen": 1794844273.0994322,
+    "ast_hash": "d6788c2ee908b80e4a417043e41ea8ec",
+    "semantic_hash": "d6788c2ee908b80e4a417043e41ea8ec"
+  },
+  "packages/database/src/repositories/bible-repository.ts": {
+    "mtime": 1794840904.533803,
+    "seen": 1794844273.0994322,
+    "ast_hash": "f03c219691ffdbb10ba49f66f3aebf31",
+    "semantic_hash": "f03c219691ffdbb10ba49f66f3aebf31"
+  },
+  "packages/database/src/repositories/history-repository.ts": {
+    "mtime": 1794481690.3360374,
+    "seen": 1794844273.0994322,
+    "ast_hash": "af2c55eff94c17a339479b96a5d4225e",
+    "semantic_hash": "af2c55eff94c17a339479b96a5d4225e"
+  },
+  "packages/database/src/repositories/program-repository.ts": {
+    "mtime": 1794475369.2603574,
+    "seen": 1794844273.0994322,
+    "ast_hash": "9950acf133cec29d1990e73c0a02f18d",
+    "semantic_hash": "9950acf133cec29d1990e73c0a02f18d"
+  },
+  "packages/database/src/repositories/theme-repository.ts": {
+    "mtime": 1794458610.2626743,
+    "seen": 1794844273.0994322,
+    "ast_hash": "fb71e186f5e601e8a5b2885d336a1f9d",
+    "semantic_hash": "fb71e186f5e601e8a5b2885d336a1f9d"
+  },
+  "packages/database/src/seed/kjv-full.json": {
+    "mtime": 1794465658.8590631,
+    "seen": 1794844273.0994322,
+    "ast_hash": "e3d859f1c0971810dddc9b3289610639",
+    "semantic_hash": "e3d859f1c0971810dddc9b3289610639"
+  },
+  "packages/database/src/seed/telugu-bible.json": {
+    "mtime": 1794469346.2376518,
+    "seen": 1794844273.0994322,
+    "ast_hash": "1f08d1d84368fc7eccdc2a294d3643bf",
+    "semantic_hash": "1f08d1d84368fc7eccdc2a294d3643bf"
+  },
+  "packages/database/tsconfig.json": {
+    "mtime": 1794458610.327067,
+    "seen": 1794844273.0994322,
+    "ast_hash": "3b583f1f0f97a6a0bb7c85fe5f812d51",
+    "semantic_hash": "3b583f1f0f97a6a0bb7c85fe5f812d51"
+  },
+  "packages/display-manager/package.json": {
+    "mtime": 1794461513.5205147,
+    "seen": 1794844273.0994322,
+    "ast_hash": "6b080bfb8835c781eceaa90520bf560a",
+    "semantic_hash": "6b080bfb8835c781eceaa90520bf560a"
+  },
+  "packages/display-manager/src/display-service.ts": {
+    "mtime": 1794459400.263737,
+    "seen": 1794844273.0994322,
+    "ast_hash": "f32621c291628934bc31130065047508",
+    "semantic_hash": "f32621c291628934bc31130065047508"
+  },
+  "packages/display-manager/src/index.ts": {
+    "mtime": 1794459400.3451054,
+    "seen": 1794844273.0994322,
+    "ast_hash": "597e31e0817400f5f3297cc0bae1abcb",
+    "semantic_hash": "597e31e0817400f5f3297cc0bae1abcb"
+  },
+  "packages/display-manager/tsconfig.json": {
+    "mtime": 1794459400.384292,
+    "seen": 1794844273.0994322,
+    "ast_hash": "3b583f1f0f97a6a0bb7c85fe5f812d51",
+    "semantic_hash": "3b583f1f0f97a6a0bb7c85fe5f812d51"
+  },
+  "packages/keyboard-shortcuts/package.json": {
+    "mtime": 1794461520.1763515,
+    "seen": 1794844273.0994322,
+    "ast_hash": "cfd6a7f2e6a9daaae2ce518f31061c48",
+    "semantic_hash": "cfd6a7f2e6a9daaae2ce518f31061c48"
+  },
+  "packages/keyboard-shortcuts/src/index.ts": {
+    "mtime": 1794459400.4740393,
+    "seen": 1794844273.0994322,
+    "ast_hash": "083359788246011ef2732819ff2275d4",
+    "semantic_hash": "083359788246011ef2732819ff2275d4"
+  },
+  "packages/keyboard-shortcuts/src/shortcut-registry.ts": {
+    "mtime": 1794459400.5351243,
+    "seen": 1794844273.0994322,
+    "ast_hash": "4f9acdeb39966b07a728b0285de0a3f0",
+    "semantic_hash": "4f9acdeb39966b07a728b0285de0a3f0"
+  },
+  "packages/keyboard-shortcuts/tsconfig.json": {
+    "mtime": 1794459400.5680654,
+    "seen": 1794844273.0994322,
+    "ast_hash": "a3e8c0dd379f0820c5f6aeb2a145e6d2",
+    "semantic_hash": "a3e8c0dd379f0820c5f6aeb2a145e6d2"
+  },
+  "packages/logger/package.json": {
+    "mtime": 1794461444.9062183,
+    "seen": 1794844273.0994322,
+    "ast_hash": "502e22b0520ed972ae7aff258a486c15",
+    "semantic_hash": "502e22b0520ed972ae7aff258a486c15"
+  },
+  "packages/logger/src/index.ts": {
+    "mtime": 1794491553.412441,
+    "seen": 1794844273.0994322,
+    "ast_hash": "94841b887ad2fdef57c7385048ae8fa2",
+    "semantic_hash": "94841b887ad2fdef57c7385048ae8fa2"
+  },
+  "packages/logger/tsconfig.json": {
+    "mtime": 1794458604.302282,
+    "seen": 1794844273.0994322,
+    "ast_hash": "e593f8ad5a9b3270a666f05cbe967557",
+    "semantic_hash": "e593f8ad5a9b3270a666f05cbe967557"
+  },
+  "packages/media-engine/package.json": {
+    "mtime": 1794461507.4359264,
+    "seen": 1794844273.0994322,
+    "ast_hash": "5dc382e2edebd6d6aa4396c98f0db95c",
+    "semantic_hash": "5dc382e2edebd6d6aa4396c98f0db95c"
+  },
+  "packages/media-engine/src/asset-manager.ts": {
+    "mtime": 1794460289.07761,
+    "seen": 1794844273.0994322,
+    "ast_hash": "3780b4e510c83914db25edca7ef145e9",
+    "semantic_hash": "3780b4e510c83914db25edca7ef145e9"
+  },
+  "packages/media-engine/src/index.ts": {
+    "mtime": 1794460289.2213182,
+    "seen": 1794844273.0994322,
+    "ast_hash": "0810d3ffc83152ab5404887e7c302afe",
+    "semantic_hash": "0810d3ffc83152ab5404887e7c302afe"
+  },
+  "packages/media-engine/src/video-looper.ts": {
+    "mtime": 1794460289.3910563,
+    "seen": 1794844273.0994322,
+    "ast_hash": "e77cd26e531c943f00a3be90d2a70a50",
+    "semantic_hash": "e77cd26e531c943f00a3be90d2a70a50"
+  },
+  "packages/media-engine/tsconfig.json": {
+    "mtime": 1794460289.3910563,
+    "seen": 1794844273.0994322,
+    "ast_hash": "3b583f1f0f97a6a0bb7c85fe5f812d51",
+    "semantic_hash": "3b583f1f0f97a6a0bb7c85fe5f812d51"
+  },
+  "packages/presentation-engine/package.json": {
+    "mtime": 1794461495.204637,
+    "seen": 1794844273.0994322,
+    "ast_hash": "f80470733604a9abe9b4de32627075de",
+    "semantic_hash": "f80470733604a9abe9b4de32627075de"
+  },
+  "packages/presentation-engine/src/autoplay-engine.ts": {
+    "mtime": 1794459168.3882923,
+    "seen": 1794844273.0994322,
+    "ast_hash": "00708b7da1157833f57798d695d88a25",
+    "semantic_hash": "00708b7da1157833f57798d695d88a25"
+  },
+  "packages/presentation-engine/src/index.ts": {
+    "mtime": 1794459168.443254,
+    "seen": 1794844273.0994322,
+    "ast_hash": "213607be08a5edb20d531acb3ec36731",
+    "semantic_hash": "213607be08a5edb20d531acb3ec36731"
+  },
+  "packages/presentation-engine/src/presentation-controller.ts": {
+    "mtime": 1794491573.653109,
+    "seen": 1794844273.0994322,
+    "ast_hash": "97599f04eb592e76585ab355c606bc72",
+    "semantic_hash": "97599f04eb592e76585ab355c606bc72"
+  },
+  "packages/presentation-engine/tsconfig.json": {
+    "mtime": 1794459168.8194122,
+    "seen": 1794844273.0994322,
+    "ast_hash": "3b583f1f0f97a6a0bb7c85fe5f812d51",
+    "semantic_hash": "3b583f1f0f97a6a0bb7c85fe5f812d51"
+  },
+  "packages/scripture-search/package.json": {
+    "mtime": 1794461488.8933573,
+    "seen": 1794844273.0994322,
+    "ast_hash": "7878906c6beb553e8ee7d7a1ca1805d4",
+    "semantic_hash": "7878906c6beb553e8ee7d7a1ca1805d4"
+  },
+  "packages/scripture-search/src/index.ts": {
+    "mtime": 1794459167.7765548,
+    "seen": 1794844273.0994322,
+    "ast_hash": "db5176b14cf167427e6b21f9ff8e41e6",
+    "semantic_hash": "db5176b14cf167427e6b21f9ff8e41e6"
+  },
+  "packages/scripture-search/src/search-service.ts": {
+    "mtime": 1794491631.6192648,
+    "seen": 1794844273.0994322,
+    "ast_hash": "565d5b9f7828315e67c16715de2ec7d8",
+    "semantic_hash": "565d5b9f7828315e67c16715de2ec7d8"
+  },
+  "packages/scripture-search/tsconfig.json": {
+    "mtime": 1794459167.972321,
+    "seen": 1794844273.0994322,
+    "ast_hash": "de549792dc5a6b488644371420d28e64",
+    "semantic_hash": "de549792dc5a6b488644371420d28e64"
+  },
+  "packages/shared-types/package.json": {
+    "mtime": 1794461389.9896066,
+    "seen": 1794844273.0994322,
+    "ast_hash": "3ca966267cebb1a02fe4751b337db2f5",
+    "semantic_hash": "3ca966267cebb1a02fe4751b337db2f5"
+  },
+  "packages/shared-types/src/bible.ts": {
+    "mtime": 1794477068.879143,
+    "seen": 1794844273.0994322,
+    "ast_hash": "b7849ab920da07ea6124789df777c944",
+    "semantic_hash": "b7849ab920da07ea6124789df777c944"
+  },
+  "packages/shared-types/src/display.ts": {
+    "mtime": 1794458604.458866,
+    "seen": 1794844273.0994322,
+    "ast_hash": "bc5114b57d3e5147d119d4bde0c1d2bf",
+    "semantic_hash": "bc5114b57d3e5147d119d4bde0c1d2bf"
+  },
+  "packages/shared-types/src/history.ts": {
+    "mtime": 1794458604.7110472,
+    "seen": 1794844273.0994322,
+    "ast_hash": "0e138a5be8992160602716e15bcb3a77",
+    "semantic_hash": "0e138a5be8992160602716e15bcb3a77"
+  },
+  "packages/shared-types/src/index.ts": {
+    "mtime": 1794485049.9410908,
+    "seen": 1794844273.0994322,
+    "ast_hash": "06c2db30e37678bd67d76b6363bf8dee",
+    "semantic_hash": "06c2db30e37678bd67d76b6363bf8dee"
+  },
+  "packages/shared-types/src/ipc.ts": {
+    "mtime": 1794553081.909467,
+    "seen": 1794844273.0994322,
+    "ast_hash": "89e48ac324c23d0c7054107b850ce7a7",
+    "semantic_hash": "89e48ac324c23d0c7054107b850ce7a7"
+  },
+  "packages/shared-types/src/presentation.ts": {
+    "mtime": 1794477075.3443973,
+    "seen": 1794844273.0994322,
+    "ast_hash": "b321517a26afe7a2e7dc9e80c7962430",
+    "semantic_hash": "b321517a26afe7a2e7dc9e80c7962430"
+  },
+  "packages/shared-types/src/program.ts": {
+    "mtime": 1794458604.9713745,
+    "seen": 1794844273.0994322,
+    "ast_hash": "d75397334566dcfaf5913570c652299a",
+    "semantic_hash": "d75397334566dcfaf5913570c652299a"
+  },
+  "packages/shared-types/src/streaming.ts": {
+    "mtime": 1794458605.0426972,
+    "seen": 1794844273.0994322,
+    "ast_hash": "f37171c0db884725b4e72d4e164ace47",
+    "semantic_hash": "f37171c0db884725b4e72d4e164ace47"
+  },
+  "packages/shared-types/src/theme.ts": {
+    "mtime": 1794558364.9294648,
+    "seen": 1794844273.0994322,
+    "ast_hash": "81a303266fc3d66170a4d0c1d586b6e0",
+    "semantic_hash": "81a303266fc3d66170a4d0c1d586b6e0"
+  },
+  "packages/shared-types/tsconfig.json": {
+    "mtime": 1794458054.0548701,
+    "seen": 1794844273.0994322,
+    "ast_hash": "e593f8ad5a9b3270a666f05cbe967557",
+    "semantic_hash": "e593f8ad5a9b3270a666f05cbe967557"
+  },
+  "packages/streaming-engine/package.json": {
+    "mtime": 1794461526.7746074,
+    "seen": 1794844273.0994322,
+    "ast_hash": "a5bb5b297fee985336d9daae3e5c69e4",
+    "semantic_hash": "a5bb5b297fee985336d9daae3e5c69e4"
+  },
+  "packages/streaming-engine/src/disk-exporter.ts": {
+    "mtime": 1794459400.677411,
+    "seen": 1794844273.0994322,
+    "ast_hash": "99e92a498e04694ee5ceb31059af590b",
+    "semantic_hash": "99e92a498e04694ee5ceb31059af590b"
+  },
+  "packages/streaming-engine/src/index.ts": {
+    "mtime": 1794459400.7394862,
+    "seen": 1794844273.0994322,
+    "ast_hash": "ec42edda0fc5a934a15995181fbce563",
+    "semantic_hash": "ec42edda0fc5a934a15995181fbce563"
+  },
+  "packages/streaming-engine/src/ndi-adapter.ts": {
+    "mtime": 1794459400.8021796,
+    "seen": 1794844273.0994322,
+    "ast_hash": "6df23a89132c38a1bdce8c235c2d4d0d",
+    "semantic_hash": "6df23a89132c38a1bdce8c235c2d4d0d"
+  },
+  "packages/streaming-engine/tsconfig.json": {
+    "mtime": 1794459398.5841005,
+    "seen": 1794844273.0994322,
+    "ast_hash": "3b583f1f0f97a6a0bb7c85fe5f812d51",
+    "semantic_hash": "3b583f1f0f97a6a0bb7c85fe5f812d51"
+  },
+  "packages/theme-engine/package.json": {
+    "mtime": 1794461501.3177688,
+    "seen": 1794844273.0994322,
+    "ast_hash": "f3bd5045b2eed7b528a0d09978bb7cd7",
+    "semantic_hash": "f3bd5045b2eed7b528a0d09978bb7cd7"
+  },
+  "packages/theme-engine/src/css-compiler.ts": {
+    "mtime": 1794459398.720706,
+    "seen": 1794844273.0994322,
+    "ast_hash": "b41933875a49569514ec4ca51f5cee3b",
+    "semantic_hash": "b41933875a49569514ec4ca51f5cee3b"
+  },
+  "packages/theme-engine/src/font-scaler.ts": {
+    "mtime": 1794459399.274728,
+    "seen": 1794844273.0994322,
+    "ast_hash": "ec23a8aaa7b23072edc0bd1128e112e8",
+    "semantic_hash": "ec23a8aaa7b23072edc0bd1128e112e8"
+  },
+  "packages/theme-engine/src/index.ts": {
+    "mtime": 1794459399.6168084,
+    "seen": 1794844273.0994322,
+    "ast_hash": "35b39b1aed6b77b8431837a05cbe0e05",
+    "semantic_hash": "35b39b1aed6b77b8431837a05cbe0e05"
+  },
+  "packages/theme-engine/tsconfig.json": {
+    "mtime": 1794459399.7099414,
+    "seen": 1794844273.0994322,
+    "ast_hash": "2347fcd181f4ca2b992036f5fb82c8eb",
+    "semantic_hash": "2347fcd181f4ca2b992036f5fb82c8eb"
+  },
+  "packages/ui-library/package.json": {
+    "mtime": 1794495361.8059218,
+    "seen": 1794844273.0994322,
+    "ast_hash": "740c5e8894081bbc8b24ae644162256b",
+    "semantic_hash": "740c5e8894081bbc8b24ae644162256b"
+  },
+  "packages/ui-library/src/Badge.tsx": {
+    "mtime": 1794458981.0679357,
+    "seen": 1794844273.0994322,
+    "ast_hash": "54dcf4f68ca5935963bdd48cf74b5b8e",
+    "semantic_hash": "54dcf4f68ca5935963bdd48cf74b5b8e"
+  },
+  "packages/ui-library/src/Button.tsx": {
+    "mtime": 1794458981.092206,
+    "seen": 1794844273.0994322,
+    "ast_hash": "6f47dce646c4492f829d2949d3164135",
+    "semantic_hash": "6f47dce646c4492f829d2949d3164135"
+  },
+  "packages/ui-library/src/Modal.tsx": {
+    "mtime": 1794488619.1911964,
+    "seen": 1794844273.0994322,
+    "ast_hash": "f82f49f4f3c8514b74f0fc060ae2db70",
+    "semantic_hash": "f82f49f4f3c8514b74f0fc060ae2db70"
+  },
+  "packages/ui-library/src/index.ts": {
+    "mtime": 1794458981.2072976,
+    "seen": 1794844273.0994322,
+    "ast_hash": "b68deefbc365b073ca3434e724dc0f47",
+    "semantic_hash": "b68deefbc365b073ca3434e724dc0f47"
+  },
+  "packages/ui-library/src/tokens.ts": {
+    "mtime": 1794458981.3103633,
+    "seen": 1794844273.0994322,
+    "ast_hash": "bf26a40b4966d89def9768795cb167b7",
+    "semantic_hash": "bf26a40b4966d89def9768795cb167b7"
+  },
+  "packages/ui-library/tsconfig.json": {
+    "mtime": 1794458981.408331,
+    "seen": 1794844273.0994322,
+    "ast_hash": "91d389c4277e8913731b4161f9572985",
+    "semantic_hash": "91d389c4277e8913731b4161f9572985"
+  },
+  "pnpm-workspace.yaml": {
+    "mtime": 1794458054.1477313,
+    "seen": 1794844273.0994322,
+    "ast_hash": "4f9a68b8e815733c7818c2c102e74266",
+    "semantic_hash": "4f9a68b8e815733c7818c2c102e74266"
+  },
+  "tsconfig.base.json": {
+    "mtime": 1794491786.2560399,
+    "seen": 1794844273.0994322,
+    "ast_hash": "1d3f9352003c90cd1b78bf996792b5f7",
+    "semantic_hash": "1d3f9352003c90cd1b78bf996792b5f7"
+  },
+  "vitest.config.ts": {
+    "mtime": 1794458611.7924914,
+    "seen": 1794844273.0994322,
+    "ast_hash": "74846584923ca0ed83ea9dee66609d23",
+    "semantic_hash": "74846584923ca0ed83ea9dee66609d23"
+  }
+}

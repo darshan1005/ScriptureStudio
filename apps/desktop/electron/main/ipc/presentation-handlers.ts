@@ -11,6 +11,7 @@ import {
   ScriptureReference,
 } from '@scripture-studio/shared-types';
 import { DatabaseClient, HistoryRepository, BibleRepository, ThemeRepository } from '@scripture-studio/database';
+import { findCanonicalBook } from '@scripture-studio/bible-engine';
 import { createLogger } from '@scripture-studio/logger';
 import { getControlStudioWindow } from '../windows/control-studio.js';
 import { getAudienceDisplayWindow, closeAudienceDisplayWindow, broadcastOutputStatus } from '../windows/audience-display.js';
@@ -81,25 +82,45 @@ export class PresentationController {
     try {
       let chapterData = this.bibleRepo.getChapter(req.versionId, req.bookId, req.chapterNumber);
       if (!chapterData) {
-        // Fallback: match book by order, name, or abbreviation within target versionId
+        // Fallback: match book by order, name, canonical definition, or abbreviation within target versionId
         const books = this.bibleRepo.getBooks(req.versionId);
+        const canonical = findCanonicalBook(req.bookName || '') || findCanonicalBook(req.bookId);
         const matchedBook = books.find(
           (b) =>
             b.id.toLowerCase() === req.bookId.toLowerCase() ||
             (req.bookName && b.name.toLowerCase() === req.bookName.toLowerCase()) ||
-            (req.bookName && b.abbreviation.toLowerCase() === req.bookName.toLowerCase())
+            (req.bookName && b.abbreviation.toLowerCase() === req.bookName.toLowerCase()) ||
+            (canonical && (b.bookOrder === canonical.order || b.name.toLowerCase() === canonical.name.toLowerCase()))
         );
         if (matchedBook) {
           chapterData = this.bibleRepo.getChapter(req.versionId, matchedBook.id, req.chapterNumber);
         }
       }
       if (!chapterData) {
+        // If the requested versionId failed (e.g. missing translation or incomplete books), fallback to another installed version
+        const versions = this.bibleRepo.getVersions();
+        for (const v of versions) {
+          if (v.id === req.versionId) continue;
+          chapterData = this.bibleRepo.getChapter(v.id, req.bookId, req.chapterNumber);
+          if (chapterData) {
+            req.versionId = v.id;
+            break;
+          }
+        }
+      }
+      if (!chapterData) {
+        logger.warn(`Could not find chapter for ${req.versionId} ${req.bookId} ${req.chapterNumber}`);
         return { success: false, newState: this.state, error: 'Chapter not found' };
       }
 
-      const end = req.endVerse || req.startVerse;
+      const maxChapterVerse = chapterData.verses.length > 0 
+        ? Math.max(...chapterData.verses.map((v) => v.verseNumber)) 
+        : req.startVerse;
+      const requestedEnd = req.endVerse || req.startVerse;
+      const end = Math.min(requestedEnd, maxChapterVerse);
+      const start = Math.min(req.startVerse, maxChapterVerse);
       const verses = chapterData.verses.filter(
-        (v) => v.verseNumber >= req.startVerse && v.verseNumber <= end
+        (v) => v.verseNumber >= start && v.verseNumber <= end
       );
 
       if (verses.length === 0) {
@@ -108,8 +129,8 @@ export class PresentationController {
 
       const version = this.bibleRepo.getVersions().find((v) => v.id === req.versionId);
       const abbr = version?.abbreviation || 'KJV';
-      const refDisplay = `${chapterData.book.name} ${req.chapterNumber}:${req.startVerse}${
-        end > req.startVerse ? `-${end}` : ''
+      const refDisplay = `${chapterData.book.name} ${req.chapterNumber}:${start}${
+        end > start ? `-${end}` : ''
       }`;
 
       let multiVersionSlots: MultiVersionSlot[] | undefined = undefined;

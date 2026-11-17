@@ -26,7 +26,45 @@ export class ScriptureSearchService {
   constructor(private dbClient: DatabaseClient) {}
 
   parseReference(query: string): ParsedReferenceResult {
-    return parseScriptureReference(query);
+    const parsed = parseScriptureReference(query);
+    if (!parsed.isValid || !parsed.reference) {
+      return parsed;
+    }
+
+    try {
+      const db = this.dbClient.rawDb;
+      const ref = parsed.reference;
+      const cleanBook = ref.bookId.replace(/^kjv_/, '');
+
+      const row = db.prepare(`
+        SELECT MAX(bv.verse_number) as max_v
+        FROM bible_verses bv
+        JOIN bible_books bb ON bv.book_id = bb.id AND bv.version_id = bb.version_id
+        WHERE bv.chapter_number = ?
+          AND (bv.book_id = ? OR bb.name LIKE ? OR bb.abbreviation LIKE ? OR bb.normalized_name LIKE ?)
+      `).get(ref.chapterNumber, ref.bookId, `%${cleanBook}%`, `%${cleanBook}%`, `%${cleanBook}%`) as { max_v?: number } | undefined;
+
+      if (row && row.max_v && row.max_v > 0) {
+        const maxVerse = row.max_v;
+        const bookDisplayName = ref.bookName || 'Chapter';
+
+        if (ref.startVerse > maxVerse) {
+          return {
+            isValid: false,
+            error: `${bookDisplayName} ${ref.chapterNumber} only has ${maxVerse} verses (verse ${ref.startVerse} does not exist).`,
+          };
+        }
+
+        if (ref.endVerse && ref.endVerse > maxVerse) {
+          ref.endVerse = maxVerse;
+          parsed.formattedDisplay = `${bookDisplayName} ${ref.chapterNumber}:${ref.startVerse}${maxVerse > ref.startVerse ? `-${maxVerse}` : ''}`;
+        }
+      }
+    } catch (err) {
+      logger.warn('Error verifying verse count during reference parsing', err);
+    }
+
+    return parsed;
   }
 
   private buildRangeSql(range?: string): string {

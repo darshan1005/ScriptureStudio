@@ -82,8 +82,19 @@ export default function BibleReaderWorkspace({
   // Sync book & chapter if presentation navigates or recalls from history
   useEffect(() => {
     if (activeReference && books.length > 0) {
-      if (activeReference.bookId) {
-        const found = books.find((b) => b.id.toLowerCase() === activeReference.bookId.toLowerCase());
+      if (activeReference.bookId || activeReference.bookName) {
+        const cleanRefAbbr = activeReference.bookId?.includes('_')
+          ? activeReference.bookId.split('_').slice(1).join('_').toLowerCase()
+          : activeReference.bookId?.toLowerCase();
+
+        const found = books.find(
+          (b) =>
+            (activeReference.bookId && b.id.toLowerCase() === activeReference.bookId.toLowerCase()) ||
+            (activeReference.bookName && b.name.toLowerCase() === activeReference.bookName.toLowerCase()) ||
+            (activeReference.bookName && b.abbreviation.toLowerCase() === activeReference.bookName.toLowerCase()) ||
+            (cleanRefAbbr && b.abbreviation.toLowerCase() === cleanRefAbbr) ||
+            (cleanRefAbbr && b.id.toLowerCase().endsWith(`_${cleanRefAbbr}`))
+        );
         if (found && (!selectedBook || selectedBook.id.toLowerCase() !== found.id.toLowerCase())) {
           setSelectedBook(found);
         }
@@ -131,9 +142,18 @@ export default function BibleReaderWorkspace({
         setBooks(res.books);
         if (res.books.length > 0 && res.books[0]) {
           let targetBook = res.books[0];
-          if (activeReference?.bookId) {
+          if (activeReference?.bookId || activeReference?.bookName) {
+            const cleanRefAbbr = activeReference.bookId?.includes('_')
+              ? activeReference.bookId.split('_').slice(1).join('_').toLowerCase()
+              : activeReference.bookId?.toLowerCase();
+
             const matched = res.books.find(
-              (b) => b.id.toLowerCase() === activeReference.bookId.toLowerCase()
+              (b) =>
+                (activeReference.bookId && b.id.toLowerCase() === activeReference.bookId.toLowerCase()) ||
+                (activeReference.bookName && b.name.toLowerCase() === activeReference.bookName.toLowerCase()) ||
+                (activeReference.bookName && b.abbreviation.toLowerCase() === activeReference.bookName.toLowerCase()) ||
+                (cleanRefAbbr && b.abbreviation.toLowerCase() === cleanRefAbbr) ||
+                (cleanRefAbbr && b.id.toLowerCase().endsWith(`_${cleanRefAbbr}`))
             );
             if (matched) targetBook = matched;
           } else {
