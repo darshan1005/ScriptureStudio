@@ -1,6 +1,6 @@
 {
   "name": "@scripture-studio/display-manager",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Windows display topology discovery, coordinate mapping, and hot-unplug recovery",
   "main": "./src/index.ts",
   "types": "./src/index.ts",

@@ -77,7 +77,6 @@ export function setupApplicationMenu(): void {
       ],
     },
     {
-      role: 'help',
       label: '&Help',
       submenu: [
         {

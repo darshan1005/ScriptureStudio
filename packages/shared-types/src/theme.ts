@@ -94,6 +94,8 @@ export interface ThemePlacement {
   mode: AspectRatioMode;
   verticalAlign: 'top' | 'center' | 'bottom';
   lowerThirdHeightPercent?: number; // e.g. 28% for lower-third broadcast overlays
+  translationLayout?: 'stacked' | 'side-by-side'; // 'stacked' (vertical 2 rows) or 'side-by-side' (horizontal 2 columns)
+  cardStyle?: 'glass' | 'solid' | 'bordered' | 'none'; // Card styling mode
 }
 
 export interface ThemeConfiguration {

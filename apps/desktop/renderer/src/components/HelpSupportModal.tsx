@@ -24,7 +24,7 @@ interface FaqItem {
 const DEVELOPER_EMAIL = 'battuladarshan7838@gmail.com';
 const GITHUB_REPO_URL = 'https://github.com/darshan1005/ScriptureStudio';
 const GITHUB_ISSUES_URL = 'https://github.com/darshan1005/ScriptureStudio/issues';
-const APP_VERSION = '1.2.0';
+const APP_VERSION = '1.3.0';
 
 export const HelpSupportModal: React.FC<HelpSupportModalProps> = ({
   isOpen,

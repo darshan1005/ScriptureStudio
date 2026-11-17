@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { BibleVersionDto, ThemeDto } from '@scripture-studio/shared-types';
+import { BibleVersionDto, SlideContentDto, ThemeDto } from '@scripture-studio/shared-types';
 import { MaterialIcon } from './MaterialIcon.js';
+import { ScriptureSlideCanvas } from './ScriptureSlideCanvas.js';
 
 function cleanScriptureText(text: string): string {
   if (!text) return '';
@@ -285,7 +286,7 @@ export const ThemeEditorWorkspace: React.FC<ThemeEditorWorkspaceProps> = ({
       {/* Theme List Sidebar */}
       <div
         style={{
-          width: '280px',
+          width: 'clamp(220px, 18vw, 280px)',
           borderRight: '1px solid var(--border-color)',
           display: 'flex',
           flexDirection: 'column',
@@ -418,10 +419,11 @@ export const ThemeEditorWorkspace: React.FC<ThemeEditorWorkspaceProps> = ({
                   alignItems: 'center',
                   justifyContent: 'center',
                   backgroundColor: '#050B14',
-                  overflow: 'hidden',
+                  overflow: 'auto',
+                  minWidth: 0,
                 }}
               >
-                <div style={{ width: '100%', maxWidth: '720px' }}>
+                <div style={{ width: '100%', maxWidth: 'min(100%, 1100px)' }}>
                   <div
                     style={{
                       fontSize: '0.8rem',
@@ -468,82 +470,27 @@ export const ThemeEditorWorkspace: React.FC<ThemeEditorWorkspaceProps> = ({
                     </div>
                   </div>
 
-                  {/* 16:9 Scaled Preview Canvas - 100% Fully Occupied Edge-to-Edge (Matches Preview Monitor 1:1) */}
+                  {/* 16:9 Scaled Preview Canvas (Rendered via Unified ScriptureSlideCanvas) */}
                   {(() => {
-                    // Dynamic compact sizing for 16:9 monitor (matches Preview Monitor 1:1)
-                    const totalLength = isDualPreview
-                      ? primaryText.length + secondaryText.length
-                      : primaryText.length;
-                    const userBaseRem = selectedTheme.config.typography.fontSizeRem ?? 3.5;
-                    const fontMultiplier = Math.max(0.65, Math.min(1.4, userBaseRem / 3.5));
-
-                    const previewFontSize = `${(totalLength > 300 ? 0.78 : totalLength > 180 ? 0.84 : 0.92) * fontMultiplier}rem`;
-                    const previewPadding = totalLength > 250 ? '0.22rem 0.55rem' : '0.35rem 0.65rem';
-                    const previewGap = totalLength > 250 ? '0.28rem' : '0.45rem';
-                    const singleFontSize = `${(primaryText.length > 250 ? 0.95 : 1.1) * fontMultiplier}rem`;
-
-                    const refPosition = selectedTheme.config.typography.referencePosition || 'above';
-                    const refMultiplier = (selectedTheme.config.typography.referenceFontSizeRem ?? 1.4) / 1.4;
-                    const refFontSize = `${(totalLength > 250 ? 0.95 : 1.15) * refMultiplier}rem`;
-                    const refFontFamily =
-                      selectedTheme.config.typography.referenceFontFamily ||
-                      selectedTheme.config.typography.fontFamily ||
-                      'Segoe UI, Arial, sans-serif';
-                    const refColor = selectedTheme.config.typography.referenceColor || '#F59E0B';
-                    const refWeight = selectedTheme.config.typography.referenceWeight ?? 700;
-                    const refStyle = selectedTheme.config.typography.referenceStyle || 'normal';
-                    const refDec = selectedTheme.config.typography.referenceDecoration || 'none';
-
-                    const showVersion = selectedTheme.config.typography.showVersion !== false;
-                    const primaryVersionColor = selectedTheme.config.typography.versionColor || '#94A3B8';
-                    const secondaryVersionColor = selectedTheme.config.typography.secondaryVersionColor || '#F59E0B';
-                    const versionMultiplier = (selectedTheme.config.typography.versionFontSizeRem ?? 1.1) / 1.1;
-                    const primaryVersionWeight = selectedTheme.config.typography.versionWeight ?? 600;
-                    const secondaryVersionWeight = selectedTheme.config.typography.secondaryVersionWeight ?? primaryVersionWeight;
-                    const primaryVersionStyle = selectedTheme.config.typography.versionStyle || 'normal';
-                    const secondaryVersionStyle = selectedTheme.config.typography.secondaryVersionStyle || primaryVersionStyle;
-                    const slotVersionFontSize = `${0.65 * versionMultiplier}rem`;
-
-                    const shadows: string[] = [];
-                    if (selectedTheme.config.shadow.enabled) {
-                      shadows.push(
-                        `${selectedTheme.config.shadow.offsetX}px ${selectedTheme.config.shadow.offsetY}px ${selectedTheme.config.shadow.blurPx}px ${selectedTheme.config.shadow.color}`
-                      );
-                    }
-                    if (selectedTheme.config.glow?.enabled) {
-                      shadows.push(`0 0 ${selectedTheme.config.glow.radiusPx}px ${selectedTheme.config.glow.color}`);
-                    }
-                    const textShadowVal = shadows.length > 0 ? shadows.join(', ') : '0 2px 6px rgba(0,0,0,0.85)';
-                    const strokeVal = selectedTheme.config.outline.enabled
-                      ? `${selectedTheme.config.outline.widthPx}px ${selectedTheme.config.outline.color}`
-                      : undefined;
-                    const fontStyleVal = selectedTheme.config.typography.fontStyle || 'normal';
-                    const textDecVal = selectedTheme.config.typography.textDecoration || 'none';
-                    const letterSpacingVal = `${selectedTheme.config.typography.letterSpacingPx ?? 0.5}px`;
-                    const textTransformVal = (selectedTheme.config.typography.transform as any) || 'none';
-
-                    const renderReferenceTitle = () => {
-                      if (refPosition === 'hidden') return null;
-                      return (
-                        <div
-                          style={{
-                            fontSize: refFontSize,
-                            fontWeight: refWeight,
-                            color: refColor,
-                            fontStyle: refStyle,
-                            textDecoration: refDec,
-                            fontFamily: refFontFamily,
-                            marginBottom: refPosition === 'below' ? 0 : '1.5cqh',
-                            marginTop: refPosition === 'below' ? '1.5cqh' : 0,
-                            letterSpacing: '0.04em',
-                            textShadow: textShadowVal,
-                            textAlign: (selectedTheme.config.typography.alignment as any) || 'center',
-                            flexShrink: 0,
-                          }}
-                        >
-                          <span>John 3:16</span>
-                        </div>
-                      );
+                    const themeEditorPreviewSlide: SlideContentDto = {
+                      id: 'theme_editor_preview',
+                      referenceDisplay: 'John 3:16',
+                      versionAbbreviation: primaryAbbr,
+                      verses: [{ verseNumber: 16, text: cleanScriptureText(primaryText) }],
+                      multiVersionSlots: isDualPreview
+                        ? [
+                            {
+                              versionAbbreviation: primaryAbbr,
+                              versionName: primaryVersionName,
+                              text: cleanScriptureText(primaryText),
+                            },
+                            {
+                              versionAbbreviation: secondaryAbbr,
+                              versionName: secondaryVersionName,
+                              text: cleanScriptureText(secondaryText),
+                            },
+                          ]
+                        : undefined,
                     };
 
                     return (
@@ -555,162 +502,14 @@ export const ThemeEditorWorkspace: React.FC<ThemeEditorWorkspaceProps> = ({
                           overflow: 'hidden',
                           border: '2px solid var(--border-color)',
                           boxShadow: '0 12px 36px rgba(0,0,0,0.8)',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          justifyContent:
-                            selectedTheme.config.placement.verticalAlign === 'top'
-                              ? 'flex-start'
-                              : selectedTheme.config.placement.verticalAlign === 'bottom'
-                                ? 'flex-end'
-                                : 'center',
-                          alignItems: 'center',
-                          padding: `${selectedTheme.config.margins.topPercent ?? 4}% ${selectedTheme.config.margins.rightPercent ?? 6}% ${selectedTheme.config.margins.bottomPercent ?? 4}% ${selectedTheme.config.margins.leftPercent ?? 6}%`,
-                          textAlign: (selectedTheme.config.typography.alignment as any) || 'center',
                           position: 'relative',
-                          boxSizing: 'border-box',
-                          ...getPreviewBackground(selectedTheme),
                         }}
                       >
-                        <div
-                          style={{
-                            maxWidth: `${selectedTheme.config.margins.containerMaxWidthPercent ?? 94}%`,
-                            width: '100%',
-                            padding: `${selectedTheme.config.margins.paddingPercent ?? 2}%`,
-                            boxSizing: 'border-box',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            justifyContent:
-                              selectedTheme.config.placement.verticalAlign === 'top'
-                                ? 'flex-start'
-                                : selectedTheme.config.placement.verticalAlign === 'bottom'
-                                  ? 'flex-end'
-                                  : 'center',
-                          }}
-                        >
-                          {/* Reference Title if Above */}
-                          {refPosition !== 'below' && renderReferenceTitle()}
-
-                          {/* Scripture Content (Dual Translation or Single Version) */}
-                          {isDualPreview ? (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: previewGap, width: '100%' }}>
-                              {/* Primary Translation Card */}
-                              <div
-                                style={{
-                                  padding: previewPadding,
-                                  borderRadius: '5px',
-                                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                                  border: '1px solid rgba(255, 255, 255, 0.12)',
-                                  textAlign: (selectedTheme.config.typography.alignment as any) || 'center',
-                                  boxSizing: 'border-box',
-                                }}
-                              >
-                                {showVersion && (
-                                  <div
-                                    style={{
-                                      fontSize: slotVersionFontSize,
-                                      fontWeight: primaryVersionWeight,
-                                      color: primaryVersionColor,
-                                      fontStyle: primaryVersionStyle,
-                                      marginBottom: '1px',
-                                      letterSpacing: '0.04em',
-                                      textTransform: 'uppercase',
-                                    }}
-                                  >
-                                    {primaryVersionName}
-                                  </div>
-                                )}
-                                <div
-                                  style={{
-                                    fontSize: previewFontSize,
-                                    lineHeight: selectedTheme.config.typography.lineHeight || 1.35,
-                                    color: selectedTheme.config.typography.color || '#FFFFFF',
-                                    fontFamily: selectedTheme.config.typography.fontFamily || 'Segoe UI, Arial, sans-serif',
-                                    fontWeight: selectedTheme.config.typography.fontWeight || 600,
-                                    fontStyle: fontStyleVal,
-                                    textDecoration: textDecVal,
-                                    letterSpacing: letterSpacingVal,
-                                    textTransform: textTransformVal,
-                                    textShadow: textShadowVal,
-                                    WebkitTextStroke: strokeVal,
-                                    wordBreak: 'break-word',
-                                  }}
-                                >
-                                  {cleanScriptureText(primaryText)}
-                                </div>
-                              </div>
-
-                              {/* Secondary Translation Card */}
-                              <div
-                                style={{
-                                  padding: previewPadding,
-                                  borderRadius: '5px',
-                                  backgroundColor: 'rgba(245, 158, 11, 0.08)',
-                                  border: '1px solid rgba(245, 158, 11, 0.28)',
-                                  textAlign: (selectedTheme.config.typography.alignment as any) || 'center',
-                                  boxSizing: 'border-box',
-                                }}
-                              >
-                                {showVersion && (
-                                  <div
-                                    style={{
-                                      fontSize: slotVersionFontSize,
-                                      fontWeight: secondaryVersionWeight,
-                                      color: secondaryVersionColor,
-                                      fontStyle: secondaryVersionStyle,
-                                      marginBottom: '1px',
-                                      letterSpacing: '0.04em',
-                                      textTransform: 'uppercase',
-                                    }}
-                                  >
-                                    {secondaryVersionName}
-                                  </div>
-                                )}
-                                <div
-                                  style={{
-                                    fontSize: previewFontSize,
-                                    lineHeight: selectedTheme.config.typography.lineHeight || 1.35,
-                                    color: selectedTheme.config.typography.color || '#FFFFFF',
-                                    fontFamily: selectedTheme.config.typography.fontFamily || 'Segoe UI, Arial, sans-serif',
-                                    fontWeight: selectedTheme.config.typography.fontWeight || 600,
-                                    fontStyle: fontStyleVal,
-                                    textDecoration: textDecVal,
-                                    letterSpacing: letterSpacingVal,
-                                    textTransform: textTransformVal,
-                                    textShadow: textShadowVal,
-                                    WebkitTextStroke: strokeVal,
-                                    wordBreak: 'break-word',
-                                  }}
-                                >
-                                  {cleanScriptureText(secondaryText)}
-                                </div>
-                              </div>
-                            </div>
-                          ) : (
-                            /* Single Translation Verse */
-                            <div
-                              style={{
-                                fontSize: singleFontSize,
-                                lineHeight: selectedTheme.config.typography.lineHeight || 1.45,
-                                color: selectedTheme.config.typography.color || '#FFFFFF',
-                                fontFamily: selectedTheme.config.typography.fontFamily || 'Segoe UI, Arial, sans-serif',
-                                fontWeight: selectedTheme.config.typography.fontWeight || 600,
-                                fontStyle: fontStyleVal,
-                                textDecoration: textDecVal,
-                                letterSpacing: letterSpacingVal,
-                                textTransform: textTransformVal,
-                                textShadow: textShadowVal,
-                                WebkitTextStroke: strokeVal,
-                                textAlign: (selectedTheme.config.typography.alignment as any) || 'center',
-                                wordBreak: 'break-word',
-                              }}
-                            >
-                              {primaryText}
-                            </div>
-                          )}
-
-                          {/* Reference Title if Below */}
-                          {refPosition === 'below' && renderReferenceTitle()}
-                        </div>
+                        <ScriptureSlideCanvas
+                          slide={themeEditorPreviewSlide}
+                          theme={selectedTheme}
+                          showBoundingBox={activeTab === 'layout'}
+                        />
                       </div>
                     );
                   })()}
@@ -720,7 +519,7 @@ export const ThemeEditorWorkspace: React.FC<ThemeEditorWorkspaceProps> = ({
               {/* Right Side: Granular Control Tabs */}
               <div
                 style={{
-                  width: '380px',
+                  width: 'clamp(340px, 26vw, 420px)',
                   borderLeft: '1px solid var(--border-color)',
                   display: 'flex',
                   flexDirection: 'column',
@@ -811,14 +610,47 @@ export const ThemeEditorWorkspace: React.FC<ThemeEditorWorkspaceProps> = ({
                               <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#F1F5F9' }}>
                                 Scripture Font Size
                               </label>
-                              <span style={{ fontSize: '0.82rem', color: '#60A5FA', fontWeight: 700 }}>
-                                {selectedTheme.config.typography.fontSizeRem ?? 3.5} rem ({Math.round((selectedTheme.config.typography.fontSizeRem ?? 3.5) * 16)}px)
-                              </span>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                <input
+                                  type="number"
+                                  min={1.0}
+                                  max={12.0}
+                                  step={0.1}
+                                  value={selectedTheme.config.typography.fontSizeRem ?? 3.5}
+                                  onChange={(e) => {
+                                    const val = parseFloat(e.target.value);
+                                    if (!isNaN(val) && val > 0) {
+                                      setSelectedTheme({
+                                        ...selectedTheme,
+                                        config: {
+                                          ...selectedTheme.config,
+                                          typography: { ...selectedTheme.config.typography, fontSizeRem: val },
+                                        },
+                                      });
+                                    }
+                                  }}
+                                  style={{
+                                    width: '58px',
+                                    padding: '0.15rem 0.35rem',
+                                    fontSize: '0.8rem',
+                                    textAlign: 'right',
+                                    backgroundColor: 'var(--bg-card)',
+                                    color: '#60A5FA',
+                                    fontWeight: 700,
+                                    border: '1px solid var(--border-color)',
+                                    borderRadius: '4px',
+                                  }}
+                                />
+                                <span style={{ fontSize: '0.8rem', color: '#60A5FA', fontWeight: 700 }}>rem</span>
+                                <span style={{ fontSize: '0.72rem', color: 'var(--text-dim)' }}>
+                                  ({Math.round((selectedTheme.config.typography.fontSizeRem ?? 3.5) * 16)}px)
+                                </span>
+                              </div>
                             </div>
                             <input
                               type="range"
-                              min={1.5}
-                              max={7.0}
+                              min={1.0}
+                              max={10.0}
                               step={0.1}
                               value={selectedTheme.config.typography.fontSizeRem ?? 3.5}
                               onChange={(e) =>
@@ -839,6 +671,9 @@ export const ThemeEditorWorkspace: React.FC<ThemeEditorWorkspaceProps> = ({
                                 { label: 'Standard', rem: 3.5 },
                                 { label: 'Large', rem: 4.5 },
                                 { label: 'Huge', rem: 5.5 },
+                                { label: 'Giant', rem: 7.0 },
+                                { label: 'Massive', rem: 8.5 },
+                                { label: 'Ultra', rem: 10.0 },
                               ].map((sz) => (
                                 <button
                                   key={sz.label}
@@ -854,13 +689,14 @@ export const ThemeEditorWorkspace: React.FC<ThemeEditorWorkspaceProps> = ({
                                   }
                                   style={{
                                     flex: 1,
-                                    fontSize: '0.7rem',
+                                    fontSize: '0.68rem',
                                     padding: '0.2rem 0',
                                     backgroundColor: (selectedTheme.config.typography.fontSizeRem ?? 3.5) === sz.rem ? 'var(--primary)' : 'var(--bg-card)',
                                     color: (selectedTheme.config.typography.fontSizeRem ?? 3.5) === sz.rem ? '#FFFFFF' : 'var(--text-dim)',
                                     border: '1px solid var(--border-color)',
                                     borderRadius: '4px',
                                     cursor: 'pointer',
+                                    whiteSpace: 'nowrap',
                                   }}
                                 >
                                   {sz.label}
@@ -1128,8 +964,42 @@ export const ThemeEditorWorkspace: React.FC<ThemeEditorWorkspaceProps> = ({
                                     },
                                   })
                                 }
-                                style={{ width: '100%' }}
+                                style={{ width: '100%', marginBottom: '0.35rem' }}
                               />
+                              <div style={{ display: 'flex', gap: '0.25rem' }}>
+                                {[
+                                  { label: 'Tight', val: 1.15 },
+                                  { label: 'Normal', val: 1.35 },
+                                  { label: 'Relaxed', val: 1.55 },
+                                  { label: 'Spacious', val: 1.85 },
+                                ].map((lh) => (
+                                  <button
+                                    key={lh.label}
+                                    type="button"
+                                    onClick={() =>
+                                      setSelectedTheme({
+                                        ...selectedTheme,
+                                        config: {
+                                          ...selectedTheme.config,
+                                          typography: { ...selectedTheme.config.typography, lineHeight: lh.val },
+                                        },
+                                      })
+                                    }
+                                    style={{
+                                      flex: 1,
+                                      fontSize: '0.65rem',
+                                      padding: '0.15rem 0',
+                                      backgroundColor: Math.abs((selectedTheme.config.typography.lineHeight || 1.35) - lh.val) < 0.05 ? 'var(--primary)' : 'var(--bg-card)',
+                                      color: Math.abs((selectedTheme.config.typography.lineHeight || 1.35) - lh.val) < 0.05 ? '#FFFFFF' : 'var(--text-dim)',
+                                      border: '1px solid var(--border-color)',
+                                      borderRadius: '3px',
+                                      cursor: 'pointer',
+                                    }}
+                                  >
+                                    {lh.label}
+                                  </button>
+                                ))}
+                              </div>
                             </div>
 
                             <div>
@@ -2809,10 +2679,10 @@ export const ThemeEditorWorkspace: React.FC<ThemeEditorWorkspaceProps> = ({
                         </span>
 
                         {/* Max Width */}
-                        <div style={{ marginBottom: '0.6rem' }}>
+                        <div style={{ marginBottom: '0.75rem' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
                             <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
-                              Content Width (Max Width)
+                              Content Width (Box Width)
                             </label>
                             <span style={{ fontSize: '0.75rem', color: '#60A5FA', fontWeight: 700 }}>
                               {selectedTheme.config.margins.containerMaxWidthPercent ?? 92}%
@@ -2820,7 +2690,7 @@ export const ThemeEditorWorkspace: React.FC<ThemeEditorWorkspaceProps> = ({
                           </div>
                           <input
                             type="range"
-                            min={50}
+                            min={40}
                             max={100}
                             step={1}
                             value={selectedTheme.config.margins.containerMaxWidthPercent ?? 92}
@@ -2836,23 +2706,65 @@ export const ThemeEditorWorkspace: React.FC<ThemeEditorWorkspaceProps> = ({
                                 },
                               })
                             }
-                            style={{ width: '100%' }}
+                            style={{ width: '100%', marginBottom: '0.25rem' }}
                           />
+                          <div style={{ display: 'flex', gap: '0.25rem' }}>
+                            {[
+                              { label: 'Compact', pct: 70 },
+                              { label: 'Standard', pct: 92 },
+                              { label: 'Wide', pct: 96 },
+                              { label: 'Edge', pct: 100 },
+                            ].map((wp) => (
+                              <button
+                                key={wp.label}
+                                type="button"
+                                onClick={() =>
+                                  setSelectedTheme({
+                                    ...selectedTheme,
+                                    config: {
+                                      ...selectedTheme.config,
+                                      margins: {
+                                        ...selectedTheme.config.margins,
+                                        containerMaxWidthPercent: wp.pct,
+                                      },
+                                    },
+                                  })
+                                }
+                                style={{
+                                  flex: 1,
+                                  fontSize: '0.65rem',
+                                  padding: '0.15rem 0',
+                                  backgroundColor: (selectedTheme.config.margins.containerMaxWidthPercent ?? 92) === wp.pct ? 'var(--primary)' : 'var(--bg-card)',
+                                  color: (selectedTheme.config.margins.containerMaxWidthPercent ?? 92) === wp.pct ? '#FFFFFF' : 'var(--text-dim)',
+                                  border: '1px solid var(--border-color)',
+                                  borderRadius: '3px',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                {wp.label} ({wp.pct}%)
+                              </button>
+                            ))}
+                          </div>
                         </div>
 
-                        {/* Max Height */}
-                        <div style={{ marginBottom: '0.6rem' }}>
+                        {/* Content Height */}
+                        <div style={{ marginBottom: '0.75rem' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
-                            <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
-                              Content Height (Max Height)
-                            </label>
+                            <div>
+                              <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
+                                Content Height (Box Height)
+                              </label>
+                              <span style={{ fontSize: '0.65rem', color: '#94A3B8', display: 'block' }}>
+                                Maximum vertical boundary; auto-fits text without clipping
+                              </span>
+                            </div>
                             <span style={{ fontSize: '0.75rem', color: '#60A5FA', fontWeight: 700 }}>
                               {selectedTheme.config.margins.containerMaxHeightPercent ?? 88}%
                             </span>
                           </div>
                           <input
                             type="range"
-                            min={50}
+                            min={20}
                             max={100}
                             step={1}
                             value={selectedTheme.config.margins.containerMaxHeightPercent ?? 88}
@@ -2868,8 +2780,46 @@ export const ThemeEditorWorkspace: React.FC<ThemeEditorWorkspaceProps> = ({
                                 },
                               })
                             }
-                            style={{ width: '100%' }}
+                            style={{ width: '100%', marginBottom: '0.25rem' }}
                           />
+                          <div style={{ display: 'flex', gap: '0.25rem' }}>
+                            {[
+                              { label: 'Banner', pct: 35 },
+                              { label: 'Compact', pct: 50 },
+                              { label: 'Medium', pct: 70 },
+                              { label: 'Standard', pct: 88 },
+                              { label: 'Full', pct: 98 },
+                            ].map((hp) => (
+                              <button
+                                key={hp.label}
+                                type="button"
+                                onClick={() =>
+                                  setSelectedTheme({
+                                    ...selectedTheme,
+                                    config: {
+                                      ...selectedTheme.config,
+                                      margins: {
+                                        ...selectedTheme.config.margins,
+                                        containerMaxHeightPercent: hp.pct,
+                                      },
+                                    },
+                                  })
+                                }
+                                style={{
+                                  flex: 1,
+                                  fontSize: '0.65rem',
+                                  padding: '0.15rem 0',
+                                  backgroundColor: (selectedTheme.config.margins.containerMaxHeightPercent ?? 88) === hp.pct ? 'var(--primary)' : 'var(--bg-card)',
+                                  color: (selectedTheme.config.margins.containerMaxHeightPercent ?? 88) === hp.pct ? '#FFFFFF' : 'var(--text-dim)',
+                                  border: '1px solid var(--border-color)',
+                                  borderRadius: '3px',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                {hp.label} ({hp.pct}%)
+                              </button>
+                            ))}
+                          </div>
                         </div>
 
                         {/* Inner Padding */}
@@ -2905,7 +2855,115 @@ export const ThemeEditorWorkspace: React.FC<ThemeEditorWorkspaceProps> = ({
                         </div>
                       </div>
 
-                      {/* 2. Vertical Alignment */}
+                      {/* 2. Dual Translation Grid Layout (Stacked vs Side-by-Side) */}
+                      <div style={{ backgroundColor: 'var(--bg-panel)', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+                        <div style={{ marginBottom: '0.4rem' }}>
+                          <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#F1F5F9', display: 'block' }}>
+                            Dual Translation Grid Layout
+                          </span>
+                          <span style={{ fontSize: '0.68rem', color: 'var(--text-dim)' }}>
+                            Choose orientation when presenting multiple Bible versions
+                          </span>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem' }}>
+                          {[
+                            { id: 'stacked', label: 'Stacked (2 Rows)', icon: 'view_agenda' },
+                            { id: 'side-by-side', label: 'Side-by-Side (2 Cols)', icon: 'view_column' },
+                          ].map((lo) => {
+                            const isCurrent = (selectedTheme.config.placement.translationLayout || 'stacked') === lo.id;
+                            return (
+                              <button
+                                key={lo.id}
+                                type="button"
+                                onClick={() =>
+                                  setSelectedTheme({
+                                    ...selectedTheme,
+                                    config: {
+                                      ...selectedTheme.config,
+                                      placement: {
+                                        ...selectedTheme.config.placement,
+                                        translationLayout: lo.id as any,
+                                      },
+                                    },
+                                  })
+                                }
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: '0.35rem',
+                                  padding: '0.45rem 0.2rem',
+                                  fontSize: '0.74rem',
+                                  fontWeight: isCurrent ? 700 : 500,
+                                  backgroundColor: isCurrent ? 'var(--primary)' : 'var(--bg-card)',
+                                  color: isCurrent ? '#FFFFFF' : 'var(--text-dim)',
+                                  border: isCurrent ? '1px solid #3B82F6' : '1px solid var(--border-color)',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                <MaterialIcon name={lo.icon} size={15} />
+                                <span>{lo.label}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* 3. Translation Card Style */}
+                      <div style={{ backgroundColor: 'var(--bg-panel)', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+                        <div style={{ marginBottom: '0.4rem' }}>
+                          <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#F1F5F9', display: 'block' }}>
+                            Translation Card Style
+                          </span>
+                          <span style={{ fontSize: '0.68rem', color: 'var(--text-dim)' }}>
+                            Backdrop and frame appearance for scripture boxes
+                          </span>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.3rem' }}>
+                          {[
+                            { id: 'glass', label: 'Glass' },
+                            { id: 'solid', label: 'Solid' },
+                            { id: 'bordered', label: 'Border' },
+                            { id: 'none', label: 'Seamless' },
+                          ].map((cs) => {
+                            const isCurrent = (selectedTheme.config.placement.cardStyle || 'glass') === cs.id;
+                            return (
+                              <button
+                                key={cs.id}
+                                type="button"
+                                onClick={() =>
+                                  setSelectedTheme({
+                                    ...selectedTheme,
+                                    config: {
+                                      ...selectedTheme.config,
+                                      placement: {
+                                        ...selectedTheme.config.placement,
+                                        cardStyle: cs.id as any,
+                                      },
+                                    },
+                                  })
+                                }
+                                style={{
+                                  padding: '0.4rem 0.1rem',
+                                  fontSize: '0.72rem',
+                                  fontWeight: isCurrent ? 700 : 500,
+                                  backgroundColor: isCurrent ? 'var(--primary)' : 'var(--bg-card)',
+                                  color: isCurrent ? '#FFFFFF' : 'var(--text-dim)',
+                                  border: isCurrent ? '1px solid #3B82F6' : '1px solid var(--border-color)',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer',
+                                  textAlign: 'center',
+                                }}
+                              >
+                                {cs.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* 4. Vertical Alignment */}
                       <div>
                         <label style={{ display: 'block', fontSize: '0.78rem', color: 'var(--text-dim)', marginBottom: '4px' }}>
                           Vertical Content Alignment
@@ -2949,7 +3007,7 @@ export const ThemeEditorWorkspace: React.FC<ThemeEditorWorkspaceProps> = ({
                         </div>
                       </div>
 
-                      {/* 3. Screen Safe Margins */}
+                      {/* 5. Screen Safe Margins */}
                       <div style={{ backgroundColor: 'var(--bg-panel)', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
                         <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#F1F5F9', display: 'block', marginBottom: '0.5rem' }}>
                           Screen Safe Margins
@@ -3070,6 +3128,76 @@ export const ThemeEditorWorkspace: React.FC<ThemeEditorWorkspaceProps> = ({
                           <option value="16:9">Fullscreen Sanctuary Projection (16:9)</option>
                           <option value="lower-third">Broadcast Lower-Third (Live Stream)</option>
                         </select>
+
+                        {/* Lower-Third Bar Height (visible when lower-third is active) */}
+                        {selectedTheme.config.placement.mode === 'lower-third' && (
+                          <div style={{ marginTop: '0.6rem', padding: '0.5rem', backgroundColor: 'var(--bg-card)', borderRadius: '4px', border: '1px solid var(--border-color)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
+                              <label style={{ fontSize: '0.75rem', color: '#F59E0B', fontWeight: 600 }}>
+                                Lower-Third Bar Height
+                              </label>
+                              <span style={{ fontSize: '0.75rem', color: '#F59E0B', fontWeight: 700 }}>
+                                {selectedTheme.config.placement.lowerThirdHeightPercent ?? 32}%
+                              </span>
+                            </div>
+                            <input
+                              type="range"
+                              min={15}
+                              max={50}
+                              step={1}
+                              value={selectedTheme.config.placement.lowerThirdHeightPercent ?? 32}
+                              onChange={(e) =>
+                                setSelectedTheme({
+                                  ...selectedTheme,
+                                  config: {
+                                    ...selectedTheme.config,
+                                    placement: {
+                                      ...selectedTheme.config.placement,
+                                      lowerThirdHeightPercent: Number(e.target.value),
+                                    },
+                                  },
+                                })
+                              }
+                              style={{ width: '100%', marginBottom: '0.25rem' }}
+                            />
+                            <div style={{ display: 'flex', gap: '0.25rem' }}>
+                              {[
+                                { label: 'Slim', pct: 22 },
+                                { label: 'Standard', pct: 32 },
+                                { label: 'Tall', pct: 42 },
+                              ].map((lt) => (
+                                <button
+                                  key={lt.label}
+                                  type="button"
+                                  onClick={() =>
+                                    setSelectedTheme({
+                                      ...selectedTheme,
+                                      config: {
+                                        ...selectedTheme.config,
+                                        placement: {
+                                          ...selectedTheme.config.placement,
+                                          lowerThirdHeightPercent: lt.pct,
+                                        },
+                                      },
+                                    })
+                                  }
+                                  style={{
+                                    flex: 1,
+                                    fontSize: '0.65rem',
+                                    padding: '0.15rem 0',
+                                    backgroundColor: (selectedTheme.config.placement.lowerThirdHeightPercent ?? 32) === lt.pct ? 'var(--primary)' : 'var(--bg-panel)',
+                                    color: (selectedTheme.config.placement.lowerThirdHeightPercent ?? 32) === lt.pct ? '#FFFFFF' : 'var(--text-dim)',
+                                    border: '1px solid var(--border-color)',
+                                    borderRadius: '3px',
+                                    cursor: 'pointer',
+                                  }}
+                                >
+                                  {lt.label} ({lt.pct}%)
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}

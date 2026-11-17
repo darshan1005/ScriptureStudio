@@ -1,6 +1,6 @@
 {
   "name": "@scripture-studio/scripture-search",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Full-text scripture search engine using SQLite FTS5 and reference parser",
   "main": "./src/index.ts",
   "types": "./src/index.ts",

@@ -1,17 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { BibleVersionDto, PresentationStateDto, ThemeDto } from '@scripture-studio/shared-types';
 import { MaterialIcon } from './MaterialIcon.js';
-
-function cleanScriptureText(text: string): string {
-  if (!text) return '';
-  return text
-    .replace(/<sup\b[^>]*>[\s\S]*?<\/sup>/gi, '')
-    .replace(/<f\b[^>]*>[\s\S]*?<\/f>/gi, '')
-    .replace(/<note\b[^>]*>[\s\S]*?<\/note>/gi, '')
-    .replace(/<[^>]+>/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
+import { ScriptureSlideCanvas } from './ScriptureSlideCanvas.js';
 
 interface PreviewPaneProps {
   state: PresentationStateDto | null;
@@ -114,157 +104,6 @@ export default function PreviewPane({
     }
   };
 
-  const bg = activeTheme?.config.background;
-  let bgStyle: React.CSSProperties = {
-    backgroundColor: '#09172C',
-  };
-  if (bg) {
-    if (bg.type === 'gradient' && bg.gradient) {
-      const dir = bg.gradient.directionDeg || 135;
-      const stops = bg.gradient.stops.map((s) => `${s.color} ${s.offset}%`).join(', ');
-      bgStyle = { background: `linear-gradient(${dir}deg, ${stops})` };
-    } else if (bg.type === 'solid' && bg.color) {
-      bgStyle = { backgroundColor: bg.color };
-    } else if (bg.type === 'image' && bg.imageUrl) {
-      const dimming = (bg.dimmingPercent ?? 45) / 100;
-      bgStyle = {
-        backgroundImage: `linear-gradient(rgba(0,0,0,${dimming}), rgba(0,0,0,${dimming})), url("${bg.imageUrl}")`,
-        backgroundSize: bg.objectFit || 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-      };
-    }
-  }
-
-  // Dynamic compact sizing for 16:9 monitor (matches Theme Styler 1:1, perfectly scaled to avoid overflow)
-  const isDual = Boolean(slide?.multiVersionSlots && slide.multiVersionSlots.length > 1);
-  const totalLength = isDual
-    ? slide?.multiVersionSlots?.reduce((acc, slot) => acc + slot.text.length, 0) || 0
-    : slide?.verses ? slide.verses.reduce((acc, v) => acc + v.text.length, 0) : 0;
-
-  const userBaseRem = activeTheme?.config.typography.fontSizeRem ?? 3.5;
-  const fontMultiplier = isDual
-    ? Math.max(0.70, Math.min(1.18, userBaseRem / 3.5))
-    : Math.max(0.65, Math.min(1.35, userBaseRem / 3.5));
-
-  // Dual translation sizing for compact 16:9 preview monitor (~300-340px width x ~170-190px height)
-  let dualBaseRem = 0.80;
-  let previewPadding = '0.28rem 0.55rem';
-  let previewGap = '0.35rem';
-  let refBaseRem = 0.95;
-  let slotVersionBaseRem = 0.65;
-  let lineHeightVal = activeTheme?.config.typography.lineHeight || 1.35;
-
-  if (totalLength > 450) {
-    dualBaseRem = 0.50;
-    previewPadding = '0.12rem 0.40rem';
-    previewGap = '0.18rem';
-    refBaseRem = 0.70;
-    slotVersionBaseRem = 0.52;
-    lineHeightVal = Math.min(lineHeightVal, 1.22);
-  } else if (totalLength > 320) {
-    dualBaseRem = 0.56;
-    previewPadding = '0.15rem 0.45rem';
-    previewGap = '0.22rem';
-    refBaseRem = 0.75;
-    slotVersionBaseRem = 0.55;
-    lineHeightVal = Math.min(lineHeightVal, 1.25);
-  } else if (totalLength > 220) {
-    dualBaseRem = 0.64;
-    previewPadding = '0.20rem 0.50rem';
-    previewGap = '0.26rem';
-    refBaseRem = 0.82;
-    slotVersionBaseRem = 0.58;
-    lineHeightVal = Math.min(lineHeightVal, 1.28);
-  } else if (totalLength > 120) {
-    dualBaseRem = 0.72;
-    previewPadding = '0.24rem 0.52rem';
-    previewGap = '0.30rem';
-    refBaseRem = 0.88;
-    slotVersionBaseRem = 0.62;
-    lineHeightVal = Math.min(lineHeightVal, 1.32);
-  }
-
-  const previewFontSize = `${dualBaseRem * fontMultiplier}rem`;
-  const refPosition = activeTheme?.config.typography.referencePosition || 'above';
-  const refMultiplier = (activeTheme?.config.typography.referenceFontSizeRem ?? 1.4) / 1.4;
-  const refFontSize = `${refBaseRem * refMultiplier}rem`;
-  const versionMultiplier = (activeTheme?.config.typography.versionFontSizeRem ?? 1.1) / 1.1;
-  const slotVersionFontSize = `${slotVersionBaseRem * versionMultiplier}rem`;
-
-  // Single translation sizing
-  let singleBaseRem = 1.05;
-  if (totalLength > 360) {
-    singleBaseRem = 0.75;
-  } else if (totalLength > 240) {
-    singleBaseRem = 0.85;
-  } else if (totalLength > 140) {
-    singleBaseRem = 0.95;
-  }
-  const singleFontSize = `${singleBaseRem * fontMultiplier}rem`;
-
-  // Typography, shadows, stroke from active theme
-  const shadows: string[] = [];
-  if (activeTheme?.config.shadow.enabled) {
-    shadows.push(
-      `${activeTheme.config.shadow.offsetX}px ${activeTheme.config.shadow.offsetY}px ${activeTheme.config.shadow.blurPx}px ${activeTheme.config.shadow.color}`
-    );
-  }
-  if (activeTheme?.config.glow?.enabled) {
-    shadows.push(`0 0 ${activeTheme.config.glow.radiusPx}px ${activeTheme.config.glow.color}`);
-  }
-  const textShadowVal = shadows.length > 0 ? shadows.join(', ') : '0 1px 4px rgba(0,0,0,0.8)';
-  const strokeVal = activeTheme?.config.outline.enabled
-    ? `${activeTheme.config.outline.widthPx}px ${activeTheme.config.outline.color}`
-    : undefined;
-  const fontStyleVal = activeTheme?.config.typography.fontStyle || 'normal';
-  const textDecVal = activeTheme?.config.typography.textDecoration || 'none';
-  const letterSpacingVal = `${activeTheme?.config.typography.letterSpacingPx ?? 0.5}px`;
-  const textTransformVal = (activeTheme?.config.typography.transform as any) || 'none';
-
-  // Version Tag typography styling from active theme (customizable for both translations)
-  const showVersion = activeTheme?.config.typography.showVersion !== false;
-  const primaryVersionColor = activeTheme?.config.typography.versionColor || '#94A3B8';
-  const secondaryVersionColor = activeTheme?.config.typography.secondaryVersionColor || '#F59E0B';
-  const primaryVersionWeight = activeTheme?.config.typography.versionWeight ?? 600;
-  const secondaryVersionWeight = activeTheme?.config.typography.secondaryVersionWeight ?? primaryVersionWeight;
-  const primaryVersionStyle = activeTheme?.config.typography.versionStyle || 'normal';
-  const secondaryVersionStyle = activeTheme?.config.typography.secondaryVersionStyle || primaryVersionStyle;
-
-  // Reference typography styling from active theme
-  const refFontFamily =
-    activeTheme?.config.typography.referenceFontFamily ||
-    activeTheme?.config.typography.fontFamily ||
-    'Segoe UI, Arial, sans-serif';
-  const refColor = activeTheme?.config.typography.referenceColor || '#F59E0B';
-  const refWeight = activeTheme?.config.typography.referenceWeight ?? 800;
-  const refStyle = activeTheme?.config.typography.referenceStyle || 'normal';
-  const refDec = activeTheme?.config.typography.referenceDecoration || 'none';
-
-  const renderReferenceTitle = () => {
-    if (!slide || refPosition === 'hidden') return null;
-    return (
-      <div
-        style={{
-          fontSize: refFontSize,
-          fontWeight: refWeight,
-          color: refColor,
-          fontStyle: refStyle,
-          textDecoration: refDec,
-          fontFamily: refFontFamily,
-          marginBottom: refPosition === 'below' ? 0 : '1.5cqh',
-          marginTop: refPosition === 'below' ? '1.5cqh' : 0,
-          letterSpacing: '0.04em',
-          textShadow: textShadowVal,
-          textAlign: (activeTheme?.config.typography.alignment as any) || 'center',
-          flexShrink: 0,
-        }}
-      >
-        <span>{refPosition === 'below' ? `— ${slide.referenceDisplay}` : slide.referenceDisplay}</span>
-      </div>
-    );
-  };
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '0.75rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -314,154 +153,24 @@ export default function PreviewPane({
         </div>
       </div>
 
-      {/* 16:9 Scaled Preview Canvas */}
+      {/* 16:9 Scaled Preview Canvas (Rendered via Unified ScriptureSlideCanvas) */}
       <div
-        ref={previewCanvasRef}
         style={{
           aspectRatio: '16/9',
           width: '100%',
           borderRadius: '8px',
           overflow: 'hidden',
           border: '2px solid var(--border-color)',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent:
-            activeTheme?.config.placement.verticalAlign === 'top'
-              ? 'flex-start'
-              : activeTheme?.config.placement.verticalAlign === 'bottom'
-              ? 'flex-end'
-              : 'center',
-          alignItems: 'center',
-          padding: `${activeTheme?.config.margins.topPercent ?? 4}% ${activeTheme?.config.margins.rightPercent ?? 6}% ${activeTheme?.config.margins.bottomPercent ?? 4}% ${activeTheme?.config.margins.leftPercent ?? 6}%`,
-          textAlign: (activeTheme?.config.typography.alignment as any) || 'center',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
           position: 'relative',
-          boxSizing: 'border-box',
-          ...bgStyle,
         }}
       >
-        {slide ? (
-          <div
-            style={{
-              maxWidth: `${activeTheme?.config.margins.containerMaxWidthPercent ?? 94}%`,
-              maxHeight: '100%',
-              width: '100%',
-              padding: `${Math.min(activeTheme?.config.margins.paddingPercent ?? 2, 2)}%`,
-              boxSizing: 'border-box',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent:
-                activeTheme?.config.placement.verticalAlign === 'top'
-                  ? 'flex-start'
-                  : activeTheme?.config.placement.verticalAlign === 'bottom'
-                  ? 'flex-end'
-                  : 'center',
-              overflow: 'hidden',
-            }}
-          >
-            {/* Reference Title if Above */}
-            {refPosition !== 'below' && renderReferenceTitle()}
-
-            {isDual && slide.multiVersionSlots ? (
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: previewGap,
-                  width: '100%',
-                  maxHeight: '100%',
-                  boxSizing: 'border-box',
-                  overflow: 'hidden',
-                }}
-              >
-                {slide.multiVersionSlots.map((slot, idx) => (
-                  <div
-                    key={slot.versionAbbreviation}
-                    style={{
-                      padding: previewPadding,
-                      borderRadius: '5px',
-                      backgroundColor: idx === 0 ? 'rgba(255, 255, 255, 0.05)' : 'rgba(245, 158, 11, 0.08)',
-                      border: idx === 0 ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid rgba(245, 158, 11, 0.28)',
-                      textAlign: (activeTheme?.config.typography.alignment as any) || 'center',
-                      boxSizing: 'border-box',
-                      width: '100%',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    {showVersion && (
-                      <div
-                        style={{
-                          fontSize: slotVersionFontSize,
-                          fontWeight: idx === 0 ? primaryVersionWeight : secondaryVersionWeight,
-                          color: idx === 0 ? primaryVersionColor : secondaryVersionColor,
-                          fontStyle: idx === 0 ? primaryVersionStyle : secondaryVersionStyle,
-                          marginBottom: '0.3cqh',
-                          letterSpacing: '0.06em',
-                          textTransform: 'uppercase',
-                        }}
-                      >
-                        {slot.versionName}
-                      </div>
-                    )}
-                    <div
-                      style={{
-                        fontSize: previewFontSize,
-                        lineHeight: lineHeightVal,
-                        color: activeTheme?.config.typography.color || '#FFFFFF',
-                        fontFamily: activeTheme?.config.typography.fontFamily || 'Segoe UI, Arial, sans-serif',
-                        fontWeight: activeTheme?.config.typography.fontWeight || 600,
-                        fontStyle: fontStyleVal,
-                        textDecoration: textDecVal,
-                        letterSpacing: letterSpacingVal,
-                        textTransform: textTransformVal,
-                        textShadow: textShadowVal,
-                        WebkitTextStroke: strokeVal,
-                        wordBreak: 'break-word',
-                      }}
-                    >
-                      {cleanScriptureText(slot.text)}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div
-                style={{
-                  fontSize: singleFontSize,
-                  lineHeight: activeTheme?.config.typography.lineHeight || 1.45,
-                  color: activeTheme?.config.typography.color || '#FFFFFF',
-                  fontFamily: activeTheme?.config.typography.fontFamily || 'Segoe UI, Arial, sans-serif',
-                  fontWeight: activeTheme?.config.typography.fontWeight || 600,
-                  fontStyle: fontStyleVal,
-                  textDecoration: textDecVal,
-                  letterSpacing: letterSpacingVal,
-                  textTransform: textTransformVal,
-                  textShadow: textShadowVal,
-                  WebkitTextStroke: strokeVal,
-                  textAlign: (activeTheme?.config.typography.alignment as any) || 'center',
-                  wordBreak: 'break-word',
-                  maxHeight: '100%',
-                  overflow: 'hidden',
-                }}
-              >
-                {slide.verses.map((v) => (
-                  <span key={v.verseNumber}>
-                    {slide.verses.length > 1 && (
-                      <sup style={{ color: '#94A3B8', marginRight: '4px' }}>{v.verseNumber}</sup>
-                    )}
-                    {cleanScriptureText(v.text)}{' '}
-                  </span>
-                ))}
-              </div>
-            )}
-
-            {/* Reference Title if Below */}
-            {refPosition === 'below' && renderReferenceTitle()}
-          </div>
-        ) : (
-          <div style={{ color: 'var(--text-dim)', fontSize: '0.85rem' }}>
-            No scripture staged. Select a verse from Bible reader.
-          </div>
-        )}
+        <ScriptureSlideCanvas
+          ref={previewCanvasRef}
+          slide={slide || null}
+          theme={activeTheme}
+          emptyMessage="No scripture staged. Select a verse from Bible reader."
+        />
       </div>
 
       {/* Download Success Banner */}
